@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Home, Users, DollarSign, Flame, MessageSquare, Share2, TrendingUp, X } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 // Supabase Configuration
 const SUPABASE_URL = 'https://ltrdgyraevtxwroukxkt.supabase.co';
@@ -31,7 +32,32 @@ const MealPlannerApp = () => {
   const [currentScreen, setCurrentScreen] = useState('home');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
-  
+  const searchRef = useRef(null);
+
+// Auto-focus when component loads
+useEffect(() => {
+  searchRef.current?.focus();
+}, []);
+
+// Allow typing anywhere to focus search
+useEffect(() => {
+  const handleKeyDown = (e) => {
+    const tag = document.activeElement.tagName;
+
+    if (
+      tag !== 'INPUT' &&
+      tag !== 'TEXTAREA' &&
+      !e.ctrlKey &&
+      !e.metaKey
+    ) {
+      searchRef.current?.focus();
+    }
+  };
+
+  window.addEventListener('keydown', handleKeyDown);
+  return () => window.removeEventListener('keydown', handleKeyDown);
+}, []);
+
   const mealsData = [
   { id: 1, name: 'Millet / Uji Porridge', description: 'Traditional millet breakfast porridge', budget: 70, category: 'Breakfast', ingredients: ['Millet flour', 'Water', 'Optional milk'], recipe: '1. Boil water in a pot. 2. Mix millet flour with cold water to form a smooth paste. 3. Pour the paste into boiling water while stirring continuously. 4. Cook for 10-15 minutes while stirring. 5. Add milk if desired. 6. Serve hot.', healthScore: 5, culturalNote: 'Many Kenyans grew up taking uji before school or farm work', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
   { id: 2, name: 'Boiled Sweet Potatoes & Eggs', description: 'Boiled sweet potatoes with eggs', budget: 90, category: 'Breakfast', ingredients: ['Sweet potatoes', 'Eggs', 'Salt'], recipe: '1. Peel and wash sweet potatoes. 2. Boil sweet potatoes in salted water until tender (20-30 minutes). 3. In a separate pot, boil eggs for 10 minutes. 4. Drain and serve together.', healthScore: 5, culturalNote: 'A common student and bedsitter breakfast', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
@@ -314,7 +340,11 @@ const findSimilarMeals = (meal) => {
       alert('Please enter a username to search');
       return;
     }
-    
+    const query = searchUsername.trim();
+    if (!query) {
+    alert('Please enter a username to search');
+    return;
+  }
     const users = JSON.parse(localStorage.getItem('allUsers') || '[]');
     const results = users.filter(u => 
       u.username.toLowerCase().includes(searchUsername.toLowerCase()) && 
@@ -724,6 +754,7 @@ const findSimilarMeals = (meal) => {
   <label className="text-lg font-bold text-gray-800 mb-3 block">Search Meals</label>
   <div className="relative">
     <input
+      ref={searchRef}
       type="text"
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
@@ -991,6 +1022,7 @@ const findSimilarMeals = (meal) => {
                   </label>
                   <div className="flex gap-2">
                     <input
+                      ref={searchRef}
                       type="text"
                       value={searchUsername}
                       onChange={(e) => setSearchUsername(e.target.value)}
@@ -1006,6 +1038,26 @@ const findSimilarMeals = (meal) => {
                       Search
                     </button>
                   </div>
+                  {/* Render results below input + button */}
+{searchResults.length > 0 && (
+  <div className="mt-4 space-y-2">
+    {searchResults.map(u => (
+      <div key={u.username} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+        <div>
+          <p className="font-semibold text-gray-800">{u.name}</p>
+          <p className="text-sm text-gray-500">@{u.username}</p>
+        </div>
+        <button
+          onClick={() => sendFriendRequest(u)}
+          className="bg-purple-500 text-white px-4 py-2 rounded-lg"
+        >
+          Add Friend
+        </button>
+      </div>
+    ))}
+  </div>
+)}
+
                 </div>
                 
                 {/* Search Results */}
