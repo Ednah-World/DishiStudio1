@@ -126,9 +126,18 @@ const MealPlannerApp = () => {
     return stored ? JSON.parse(stored) : [];
   });
   
+  const [friendRequests, setFriendRequests] = useState(() => {
+    const stored = localStorage.getItem('friendRequests');
+    return stored ? JSON.parse(stored) : [];
+  });
+  
   const [showAddFriend, setShowAddFriend] = useState(false);
-  const [newFriendName, setNewFriendName] = useState('');
-  const [newFriendEmail, setNewFriendEmail] = useState('');
+  const [searchUsername, setSearchUsername] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedFriendsForMeal, setSelectedFriendsForMeal] = useState([]);
+   React.useEffect(() => {
+    localStorage.setItem('friendRequests', JSON.stringify(friendRequests));
+  }, [friendRequests]);
   React.useEffect(() => {
     localStorage.setItem('friends', JSON.stringify(friends));
   }, [friends]);
@@ -165,21 +174,48 @@ React.useEffect(() => {
   saveMealHistory();
 }, [mealHistory, user]);
 
-  const handleLogin = (email, password) => {
-    setUser({ name: 'User', email });
+   const handleLogin = (email, password) => {
+    // Get user from localStorage
+    const users = JSON.parse(localStorage.getItem('allUsers') || '[]');
+    const foundUser = users.find(u => u.email === email && u.password === password);
+    
+    if (!foundUser) {
+      alert('Invalid email or password');
+      return;
+    }
+    
+    setUser({ name: foundUser.name, email: foundUser.email, username: foundUser.username });
     setIsLoggedIn(true);
     setCurrentScreen('suggestions');
     
     sendToSupabase('user_activity', {
       user_email: email,
-      user_name: 'User',
+      user_name: foundUser.name,
       action_type: 'login',
       action_details: { timestamp: new Date().toISOString() }
     });
   };
 
-  const handleRegister = (name, email, password) => {
-    setUser({ name, email });
+    const handleRegister = (name, email, password, username) => {
+    // Get all users
+    const users = JSON.parse(localStorage.getItem('allUsers') || '[]');
+    
+    // Check if username or email already exists
+    if (users.find(u => u.username === username)) {
+      alert('Username already taken');
+      return;
+    }
+    if (users.find(u => u.email === email)) {
+      alert('Email already registered');
+      return;
+    }
+    
+    // Create new user
+    const newUser = { name, email, password, username, id: Date.now() };
+    users.push(newUser);
+    localStorage.setItem('allUsers', JSON.stringify(users));
+    
+    setUser({ name, email, username });
     setIsLoggedIn(true);
     setCurrentScreen('suggestions');
     
@@ -187,7 +223,7 @@ React.useEffect(() => {
       user_email: email,
       user_name: name,
       action_type: 'register',
-      action_details: { timestamp: new Date().toISOString() }
+      action_details: { timestamp: new Date().toISOString(), username }
     });
   };
 
@@ -273,49 +309,116 @@ const findSimilarMeals = (meal) => {
   return similar.slice(0, 3);
 };
 
-const addFriend = () => {
-    if (!newFriendName.trim() || !newFriendEmail.trim()) {
-      alert('Please enter both name and email');
+  const searchUsers = () => {
+    if (!searchUsername.trim()) {
+      alert('Please enter a username to search');
       return;
     }
+    
+    const users = JSON.parse(localStorage.getItem('allUsers') || '[]');
+    const results = users.filter(u => 
+      u.username.toLowerCase().includes(searchUsername.toLowerCase()) && 
+      u.username !== user?.username
+    );
+    
+    setSearchResults(results);
+    
+    trackActivity('search_users', {
+      search_query: searchUsername,
+      results_count: results.length,
+      timestamp: new Date().toISOString()
+    });
+  };
 
-    // Check if friend already exists
-    if (friends.find(f => f.email === newFriendEmail)) {
-      alert('This friend is already added');
+  const sendFriendRequest = (targetUser) => {
+    // Check if already friends
+    if (friends.find(f => f.username === targetUser.username)) {
+      alert('You are already friends with this user');
       return;
     }
-
-    const avatars = ['👩', '👨', '👦', '👧', '👴', '👵', '🧑', '👨‍🦰', '👩‍🦰', '👨‍🦱', '👩‍🦱'];
-    const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
-
-    const newFriend = {
+    
+    // Check if request already sent
+    const existingRequest = friendRequests.find(
+      req => req.fromUsername === user.username && req.toUsername === targetUser.username
+    );
+    
+    if (existingRequest) {
+      alert('Friend request already sent');
+      return;
+    }
+    
+    // Create new request
+    const newRequest = {
       id: Date.now(),
-      name: newFriendName,
-      email: newFriendEmail,
-      avatar: randomAvatar,
-      streak: 0,
-      sentToday: false,
-      receivedToday: false
+      fromUsername: user.username,
+      fromName: user.name,
+      toUsername: targetUser.username,
+      toName: targetUser.name,
+      status: 'pending',
+      timestamp: new Date().toISOString()
     };
-
-    setFriends([...friends, newFriend]);
+    
+    setFriendRequests([...friendRequests, newRequest]);
     
     sendToSupabase('user_activity', {
       user_email: user?.email,
       user_name: user?.name,
-      action_type: 'add_friend',
+      action_type: 'send_friend_request',
       action_details: {
-        friend_name: newFriendName,
-        friend_email: newFriendEmail,
+        to_username: targetUser.username,
         timestamp: new Date().toISOString()
       }
     });
-
-    setNewFriendName('');
-    setNewFriendEmail('');
-    setShowAddFriend(false);
-    alert(`${newFriendName} added successfully! 🎉`);
+    
+    alert(`Friend request sent to ${targetUser.name}!`);
+    setSearchUsername('');
+    setSearchResults([]);
   };
+
+  const handleFriendRequest = (request, accept) => {
+    if (accept) {
+      // Add to both users' friend lists
+      const avatars = ['👩', '👨', '👦', '👧', '👴', '👵', '🧑', '👨‍🦰', '👩‍🦰', '👨‍🦱', '👩‍🦱'];
+      const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
+      
+      const newFriend = {
+        id: Date.now(),
+        name: request.fromName,
+        username: request.fromUsername,
+        avatar: randomAvatar,
+        streak: 0,
+        sentToday: false,
+        receivedToday: false
+      };
+      
+      setFriends([...friends, newFriend]);
+      
+      // Also add to the requester's friend list (in real app, this would be server-side)
+      const allFriendLists = JSON.parse(localStorage.getItem('allFriendLists') || '{}');
+      if (!allFriendLists[request.fromUsername]) {
+        allFriendLists[request.fromUsername] = [];
+      }
+      allFriendLists[request.fromUsername].push({
+        id: Date.now() + 1,
+        name: user.name,
+        username: user.username,
+        avatar: randomAvatar,
+        streak: 0,
+        sentToday: false,
+        receivedToday: false
+      });
+      localStorage.setItem('allFriendLists', JSON.stringify(allFriendLists));
+      
+      trackActivity('accept_friend_request', {
+        from_username: request.fromUsername,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Remove request (whether accepted or denied, don't notify sender)
+    setFriendRequests(friendRequests.filter(req => req.id !== request.id));
+  };
+
   const selectMeal = (meal) => {
   trackMeal(meal);
   setSelectedMeal(meal);
@@ -332,14 +435,22 @@ const addFriend = () => {
     setCurrentScreen('suggestions');
   };
 
-  const sendMealToFriend = (friendId) => {
-    const friend = friends.find(f => f.id === friendId);
+   const sendMealToFriends = () => {
+    if (selectedFriendsForMeal.length === 0) {
+      alert('Please select at least one friend');
+      return;
+    }
     
     setFriends(friends.map(f => 
-      f.id === friendId 
+      selectedFriendsForMeal.includes(f.id)
         ? { ...f, receivedToday: true, streak: f.streak + 1 }
         : f
     ));
+    
+    const friendNames = friends
+      .filter(f => selectedFriendsForMeal.includes(f.id))
+      .map(f => f.name)
+      .join(', ');
     
     sendToSupabase('user_activity', {
       user_email: user?.email,
@@ -348,12 +459,14 @@ const addFriend = () => {
       action_details: {
         meal_name: selectedMeal?.name,
         meal_budget: selectedMeal?.budget,
-        friend_name: friend?.name,
+        friend_count: selectedFriendsForMeal.length,
+        friend_names: friendNames,
         timestamp: new Date().toISOString()
       }
     });
     
-    alert('Meal sent successfully! 🎉');
+    alert(`Meal sent to ${selectedFriendsForMeal.length} friend(s)! 🎉`);
+    setSelectedFriendsForMeal([]);
     setCurrentScreen('suggestions');
   };
 
@@ -412,8 +525,8 @@ const addFriend = () => {
     <div className="min-h-screen bg-gradient-to-b from-orange-100 to-pink-100 flex items-center justify-center p-4 pb-24">
     <div className="text-center relative z-10">
       <div className="text-8xl mb-6">🍽️</div>
-      <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">DishiStudio</h1>
-      <p className="text-xl text-white mb-8 drop-shadow-md">Share meals, build streaks with friends</p>
+      <h1 className="text-5xl font-bold text-purple mb-4 drop-shadow-lg">DishiStudio</h1>
+      <p className="text-xl text-purple mb-8 drop-shadow-md">Share meals, build streaks with friends</p>
       <button
         onClick={() => setCurrentScreen('login')}
         className="bg-black text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition"
@@ -425,10 +538,17 @@ const addFriend = () => {
 );
 
   const LoginScreen = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [formData, setFormData] = useState({
+      email: '',
+      password: '',
+      name: '',
+      username: ''
+    });
     const [isRegistering, setIsRegistering] = useState(false);
-    const [name, setName] = useState('');
+
+    const handleInputChange = (field, value) => {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    };
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-orange-50 to-pink-50 flex items-center justify-center p-4">
@@ -438,33 +558,64 @@ const addFriend = () => {
           </h2>
           
           {isRegistering && (
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg mb-4"
-            />
+            <>
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  placeholder="Choose a unique username"
+                  value={formData.username}
+                  onChange={(e) => handleInputChange('username', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg"
+                />
+              </div>
+            </>
           )}
           
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg mb-4"
-          />
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg"
+            />
+          </div>
           
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg mb-6"
-          />
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Password
+            </label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={formData.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg"
+            />
+          </div>
           
           <button
-            onClick={() => isRegistering ? handleRegister(name, email, password) : handleLogin(email, password)}
+            onClick={() => isRegistering 
+              ? handleRegister(formData.name, formData.email, formData.password, formData.username) 
+              : handleLogin(formData.email, formData.password)}
             className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all mb-4"
           >
             {isRegistering ? 'Register' : 'Login'}
@@ -569,15 +720,17 @@ const addFriend = () => {
                   </button>
                 ))}
               </div>
-              <div className="mt-4">
+            <div className="mt-4">
   <label className="text-lg font-bold text-gray-800 mb-3 block">Search Meals</label>
   <div className="relative">
     <input
       type="text"
       value={searchQuery}
-      onChange={(e) => {
-        setSearchQuery(e.target.value);
-        trackActivity('search_meals', { query: e.target.value, timestamp: new Date().toISOString() });
+      onChange={(e) => setSearchQuery(e.target.value)}
+      onBlur={() => {
+        if (searchQuery) {
+          trackActivity('search_meals', { query: searchQuery, timestamp: new Date().toISOString() });
+        }
       }}
       placeholder="Search by name, ingredients, or description..."
       className="w-full p-3 pr-10 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:outline-none"
@@ -783,123 +936,182 @@ const addFriend = () => {
     );
   };
 
-  const FriendsScreen = () => (
-    <div className="pb-20">
-      <div className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-6">
-        <h2 className="text-3xl font-bold mb-2">Friends</h2>
-        <p className="opacity-90">Connect and share meals</p>
-      </div>
-      
-      <div className="p-4 max-w-4xl mx-auto">
-        {showAddFriend && (
-          <div className="bg-white rounded-xl shadow-md p-6 mb-4">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Add New Friend</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1 block">Friend's Name</label>
-                <input
-                  type="text"
-                  value={newFriendName}
-                  onChange={(e) => setNewFriendName(e.target.value)}
-                  placeholder="Enter name"
-                  className="w-full p-3 border border-gray-300 rounded-lg"
-                />
+  const FriendsScreen = () => {
+    const myPendingRequests = friendRequests.filter(req => req.toUsername === user?.username && req.status === 'pending');
+    
+    return (
+      <div className="pb-20">
+        <div className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-6">
+          <h2 className="text-3xl font-bold mb-2">Friends</h2>
+          <p className="opacity-90">Connect and share meals</p>
+        </div>
+        
+        <div className="p-4 max-w-4xl mx-auto">
+          {/* Friend Requests */}
+          {myPendingRequests.length > 0 && (
+            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 mb-4">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">
+                Friend Requests ({myPendingRequests.length})
+              </h3>
+              <div className="space-y-3">
+                {myPendingRequests.map(request => (
+                  <div key={request.id} className="bg-white rounded-lg p-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-800">{request.fromName}</p>
+                      <p className="text-sm text-gray-500">@{request.fromUsername}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleFriendRequest(request, true)}
+                        className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 transition-all"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => handleFriendRequest(request, false)}
+                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-400 transition-all"
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1 block">Friend's Email</label>
-                <input
-                  type="email"
-                  value={newFriendEmail}
-                  onChange={(e) => setNewFriendEmail(e.target.value)}
-                  placeholder="Enter email"
-                  className="w-full p-3 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={addFriend}
-                  className="flex-1 bg-gradient-to-r from-purple-500 to-indigo-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
-                >
-                  Add Friend
-                </button>
+            </div>
+          )}
+
+          {/* Add Friend Section */}
+          {showAddFriend && (
+            <div className="bg-white rounded-xl shadow-md p-6 mb-4">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Search Users</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-1 block">
+                    Search by Username
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={searchUsername}
+                      onChange={(e) => setSearchUsername(e.target.value)}
+                      placeholder="Enter username"
+                      className="flex-1 p-3 border border-gray-300 rounded-lg"
+                      onKeyPress={(e) => e.key === 'Enter' && searchUsers()}
+                      autoComplete="off"
+                  />
+                    <button
+                      onClick={searchUsers}
+                      className="bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-600 transition-all"
+                    >
+                      Search
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Search Results */}
+                {searchResults.length > 0 && (
+                  <div className="border-t pt-4 mt-4">
+                    <p className="text-sm font-semibold text-gray-700 mb-3">
+                      Search Results ({searchResults.length})
+                    </p>
+                    <div className="space-y-2">
+                      {searchResults.map(result => (
+                        <div key={result.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="font-semibold text-gray-800">{result.name}</p>
+                            <p className="text-sm text-gray-500">@{result.username}</p>
+                          </div>
+                          <button
+                            onClick={() => sendFriendRequest(result)}
+                            className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all"
+                          >
+                            Add Friend
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <button
                   onClick={() => {
                     setShowAddFriend(false);
-                    setNewFriendName('');
-                    setNewFriendEmail('');
+                    setSearchUsername('');
+                    setSearchResults([]);
                   }}
-                  className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-all"
+                  className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-all"
                 >
                   Cancel
                 </button>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {friends.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center mb-4">
-            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-xl text-gray-600 mb-2">No friends yet</p>
-            <p className="text-gray-500">Add friends to start sharing meals together!</p>
-          </div>
-        ) : (
-          friends.map(friend => (
-            <div key={friend.id} className="bg-white rounded-xl shadow-md p-6 mb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="text-4xl">{friend.avatar}</div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800">{friend.name}</h3>
-                    <p className="text-sm text-gray-500">{friend.email}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Flame className="w-4 h-4 text-orange-500" />
-                      <span className="text-sm text-gray-600">{friend.streak} day streak</span>
+          {/* Friends List */}
+          {friends.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-md p-12 text-center mb-4">
+              <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-xl text-gray-600 mb-2">No friends yet</p>
+              <p className="text-gray-500">Search for users to add as friends!</p>
+            </div>
+          ) : (
+            friends.map(friend => (
+              <div key={friend.id} className="bg-white rounded-xl shadow-md p-6 mb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="text-4xl">{friend.avatar}</div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800">{friend.name}</h3>
+                      <p className="text-sm text-gray-500">@{friend.username}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Flame className="w-4 h-4 text-orange-500" />
+                        <span className="text-sm text-gray-600">{friend.streak} day streak</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  {friend.sentToday && !friend.receivedToday && (
-                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                      Sent you a meal!
-                    </span>
-                  )}
-                  {friend.receivedToday && (
-                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                      ✓ Sent today
-                    </span>
-                  )}
-                  <button
-                     onClick={() => {
-                      if (window.confirm(`Remove ${friend.name} from friends?`)) {
-                        setFriends(friends.filter(f => f.id !== friend.id));
-                        trackActivity('remove_friend', {
-                          friend_name: friend.name,
-                          friend_email: friend.email,
-                          timestamp: new Date().toISOString()
-                        });
-                        alert(`${friend.name} removed from friends`);
-                      }
-                    }}
-                    className="text-red-500 hover:text-red-700 text-sm"
-                  >
-                    Remove
-                  </button>
+                  
+                  <div className="flex gap-2">
+                    {friend.sentToday && !friend.receivedToday && (
+                      <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                        Sent you a meal!
+                      </span>
+                    )}
+                    {friend.receivedToday && (
+                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                        ✓ Sent today
+                      </span>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`Remove ${friend.name} from friends?`)) {
+                          setFriends(friends.filter(f => f.id !== friend.id));
+                          trackActivity('remove_friend', {
+                            friend_name: friend.name,
+                            friend_username: friend.username,
+                            timestamp: new Date().toISOString()
+                          });
+                          alert(`${friend.name} removed from friends`);
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-700 text-sm"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
-        )}
+            ))
+          )}
 
-        <button 
-          onClick={() => setShowAddFriend(!showAddFriend)}
-          className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all mt-4">
-          {showAddFriend ? 'Cancel' : '+ Add Friend'}
-        </button>
+          <button 
+            onClick={() => setShowAddFriend(!showAddFriend)}
+            className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all mt-4">
+            {showAddFriend ? 'Cancel' : '+ Add Friend'}
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const StreaksScreen = () => {
     const longestStreak = friends.reduce((max, f) => Math.max(max, f.streak), 0);
@@ -952,61 +1164,112 @@ const addFriend = () => {
     );
   };
 
-  const ShareScreen = () => (
-    <div className="pb-20">
-      <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-6">
-        <h2 className="text-3xl font-bold mb-2">Share Meal</h2>
-        <p className="opacity-90">Send {selectedMeal?.name} to a friend</p>
-      </div>
-      
-      <div className="p-4 max-w-4xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-2">{selectedMeal?.name}</h3>
-          <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
-            KSh {selectedMeal?.budget}
-          </span>
-        </div>
+  const ShareScreen = () => {
+    const toggleFriendSelection = (friendId) => {
+      setSelectedFriendsForMeal(prev => 
+        prev.includes(friendId)
+          ? prev.filter(id => id !== friendId)
+          : [...prev, friendId]
+      );
+    };
 
-        <h3 className="text-lg font-bold text-gray-800 mb-4">Select a friend</h3>
+    return (
+      <div className="pb-20">
+        <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-6">
+          <h2 className="text-3xl font-bold mb-2">Share Meal</h2>
+          <p className="opacity-90">Send {selectedMeal?.name} to friends</p>
+        </div>
         
-        {friends.map(friend => (
-          <div key={friend.id} className="bg-white rounded-xl shadow-md p-6 mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="text-4xl">{friend.avatar}</div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-800">{friend.name}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Flame className="w-4 h-4 text-orange-500" />
-                    <span className="text-sm text-gray-600">{friend.streak} day streak</span>
+        <div className="p-4 max-w-4xl mx-auto">
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h3 className="text-xl font-bold text-gray-800 mb-2">{selectedMeal?.name}</h3>
+            <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
+              KSh {selectedMeal?.budget}
+            </span>
+            <p className="text-sm text-gray-600 mt-3">
+              Selected {selectedFriendsForMeal.length} friend(s)
+            </p>
+          </div>
+
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Select friends (tap to select multiple)</h3>
+          
+          {friends.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-md p-12 text-center">
+              <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-xl text-gray-600 mb-2">No friends yet</p>
+              <p className="text-gray-500">Add friends first to share meals!</p>
+            </div>
+          ) : (
+            <>
+              {friends.map(friend => {
+                const isSelected = selectedFriendsForMeal.includes(friend.id);
+                return (
+                  <div 
+                    key={friend.id} 
+                    className={`bg-white rounded-xl shadow-md p-6 mb-4 cursor-pointer transition-all ${
+                      isSelected ? 'ring-4 ring-orange-500' : ''
+                    }`}
+                    onClick={() => toggleFriendSelection(friend.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="text-4xl">{friend.avatar}</div>
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-800">{friend.name}</h3>
+                          <p className="text-sm text-gray-500">@{friend.username}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Flame className="w-4 h-4 text-orange-500" />
+                            <span className="text-sm text-gray-600">{friend.streak} day streak</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        {friend.receivedToday && (
+                          <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                            ✓ Sent today
+                          </span>
+                        )}
+                        <div className={`w-8 h-8 rounded-full border-4 flex items-center justify-center ${
+                          isSelected 
+                            ? 'bg-orange-500 border-orange-500' 
+                            : 'bg-white border-gray-300'
+                        }`}>
+                          {isSelected && <span className="text-white text-lg">✓</span>}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              
+                );
+              })}
+
               <button
-                onClick={() => sendMealToFriend(friend.id)}
-                disabled={friend.receivedToday}
-                className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-                  friend.receivedToday
+                onClick={sendMealToFriends}
+                disabled={selectedFriendsForMeal.length === 0}
+                className={`w-full py-3 rounded-lg font-semibold transition-all mb-2 ${
+                  selectedFriendsForMeal.length === 0
                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                     : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:shadow-lg'
                 }`}
               >
-                {friend.receivedToday ? '✓ Sent' : 'Send'}
+                Send to {selectedFriendsForMeal.length} Friend{selectedFriendsForMeal.length !== 1 ? 's' : ''}
               </button>
-            </div>
-          </div>
-        ))}
+            </>
+          )}
 
-        <button
-          onClick={() => setCurrentScreen('suggestions')}
-          className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-all mt-4"
-        >
-          Cancel
-        </button>
+          <button
+            onClick={() => {
+              setSelectedFriendsForMeal([]);
+              setCurrentScreen('suggestions');
+            }}
+            className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-all"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const FeedbackScreen = () => {
     const [feedback, setFeedback] = useState('');
