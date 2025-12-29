@@ -38,11 +38,669 @@ const supabase = {
 // This connects your old function calls to our new fetcher
 const sendToSupabase = supabaseFetch;
 
+const HomeScreen = ({ setCurrentScreen }) => (
+  <div className="min-h-screen bg-gradient-to-b from-orange-100 to-pink-100 flex items-center justify-center p-4 pb-24">
+    <div className="text-center relative z-10">
+      <div className="text-8xl mb-6">🍽️</div>
+      <h1 className="text-5xl font-bold text-black mb-4 drop-shadow-lg">DishiStudio</h1>
+      <p className="text-xl text-black mb-8 drop-shadow-md">Share meals, build streaks with friends</p>
+      <button
+        onClick={() => setCurrentScreen('login')}
+        className="bg-orange-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-orange-700 transition shadow-lg"
+      >
+        Get Started
+      </button>
+    </div>
+  </div>
+);
+
+const FriendsScreen = ({
+  user,
+  friends,
+  friendRequests,
+  handleFriendRequest,
+  sendFriendRequest,
+  removeFriend,
+  searchUsers,
+  searchUsername,
+  setSearchUsername,
+  searchResults,
+  showAddFriend,
+  setShowAddFriend
+}) => {
+  // Filter pending requests where YOU are the receiver
+  const myPendingRequests = friendRequests.filter(
+    req => req.receiver_id === user?.id && req.status === 'pending'
+  );
+
+  return (
+    <div className="pb-20">
+      <div className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-6">
+        <h2 className="text-3xl font-bold mb-2">Friends</h2>
+        <p className="opacity-90">Connect and share meals</p>
+      </div>
+
+      <div className="p-4 max-w-4xl mx-auto">
+        {/* --- SECTION 1: INCOMING REQUESTS --- */}
+        {myPendingRequests.length > 0 && (
+          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 mb-4">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">
+              Friend Requests ({myPendingRequests.length})
+            </h3>
+            <div className="space-y-3">
+              {myPendingRequests.map(request => (
+                <div key={request.id} className="bg-white rounded-lg p-4 flex items-center justify-between shadow-sm">
+                  <div>
+                    <p className="font-semibold text-gray-800">{request.sender_name || 'New User'}</p>
+                    <p className="text-sm text-gray-500">@{request.sender_username}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleFriendRequest(request, true)}
+                      className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => handleFriendRequest(request, false)}
+                      className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* --- SECTION 2: SEARCH & ADD FRIENDS --- */}
+        {showAddFriend && (
+          <div className="bg-white rounded-xl shadow-md p-6 mb-4 border border-purple-100">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Search Users</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-1 block">
+                  Search by Username
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={searchUsername}
+                    onChange={(e) => setSearchUsername(e.target.value)}
+                    placeholder="Enter username"
+                    className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    onKeyPress={(e) => e.key === 'Enter' && searchUsers()}
+                    autoComplete="off"
+                  />
+                  <button
+                    onClick={searchUsers}
+                    className="bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold"
+                  >
+                    Search
+                  </button>
+                </div>
+
+                {searchResults.length > 0 && (
+                  <div className="mt-6 border-t pt-4">
+                    <p className="text-xs font-bold text-gray-400 uppercase mb-3">Results</p>
+                    <div className="space-y-2">
+                      {searchResults.map(u => {
+                        const isAlreadyFriend = friends.some(f => f.id === u.id);
+                        return (
+                          <div key={u.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div>
+                              <p className="font-semibold">{u.name || u.full_name}</p>
+                              <p className="text-sm text-gray-500">@{u.username}</p>
+                            </div>
+                            <button
+                              onClick={() => sendFriendRequest(u)}
+                              disabled={u.id === user?.id || isAlreadyFriend}
+                              className={`px-4 py-2 rounded-lg font-semibold ${
+                                u.id === user?.id || isAlreadyFriend 
+                                  ? 'bg-gray-300 text-gray-500' 
+                                  : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                              }`}
+                            >
+                              {u.id === user?.id ? 'You' : isAlreadyFriend ? 'Friend' : 'Add Friend'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button onClick={() => setShowAddFriend(false)} className="w-full text-gray-500 py-2 text-sm hover:underline">
+                Close Search
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* --- SECTION 3: FRIENDS LIST --- */}
+        {friends.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-md p-12 text-center mb-4">
+            <p className="text-xl text-gray-600 mb-2 font-bold">No friends yet</p>
+            {!showAddFriend && (
+               <button onClick={() => setShowAddFriend(true)} className="bg-purple-100 text-purple-700 px-6 py-2 rounded-full font-bold">
+                 Find People
+               </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {friends.map(friend => (
+              <div key={friend.id} className="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-2xl">
+                      {friend.avatar || '🥗'}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800">{friend.name || friend.full_name}</h3>
+                      <p className="text-xs text-gray-500">@{friend.username}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => removeFriend(friend.id)} className="text-gray-300 hover:text-red-500">
+                    <span className="text-xs font-bold uppercase">Remove</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const StreaksScreen = ({ friends }) => {
+  const longestStreak = friends.reduce((max, f) => Math.max(max, f.streak || 0), 0);
+  const activeStreaks = friends.filter(f => (f.streak || 0) > 0).length;
+
+  return (
+    <div className="pb-20">
+      <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6">
+        <h2 className="text-3xl font-bold mb-2 text-white">Streaks</h2>
+        <p className="opacity-90">Keep the momentum going!</p>
+      </div>
+      
+      <div className="p-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+            <Flame className="w-12 h-12 text-orange-500 mx-auto mb-2" />
+            <p className="text-gray-600 text-sm">Longest Streak</p>
+            <p className="text-4xl font-bold text-orange-600">{longestStreak}</p>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+            <TrendingUp className="w-12 h-12 text-green-500 mx-auto mb-2" />
+            <p className="text-gray-600 text-sm">Active Streaks</p>
+            <p className="text-4xl font-bold text-green-600">{activeStreaks}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Leaderboard</h3>
+          <div className="space-y-3">
+            {[...friends]
+              .sort((a, b) => (b.streak || 0) - (a.streak || 0))
+              .map((friend, index) => (
+                <div key={friend.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-bold text-gray-400">#{index + 1}</span>
+                    <span className="text-2xl">{friend.avatar || '🥗'}</span>
+                    <span className="font-semibold text-gray-800">{friend.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Flame className="w-5 h-5 text-orange-500" />
+                    <span className="text-xl font-bold text-orange-600">{friend.streak || 0}</span>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ShareScreen = ({ 
+  selectedMeal, 
+  friends, 
+  selectedFriendsForMeal, 
+  setSelectedFriendsForMeal, 
+  sendMealToFriends, 
+  setCurrentScreen 
+}) => {
+  const toggleFriendSelection = (friendId) => {
+    setSelectedFriendsForMeal(prev => 
+      prev.includes(friendId)
+        ? prev.filter(id => id !== friendId)
+        : [...prev, friendId]
+    );
+  };
+
+  return (
+    <div className="pb-20">
+      <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-6">
+        <h2 className="text-3xl font-bold mb-2 text-white">Share Meal</h2>
+        <p className="opacity-90">Send {selectedMeal?.name} to friends</p>
+      </div>
+      
+      <div className="p-4 max-w-4xl mx-auto">
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <h3 className="text-xl font-bold text-gray-800 mb-2">{selectedMeal?.name}</h3>
+          <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
+            KSh {selectedMeal?.budget}
+          </span>
+          <p className="text-sm text-gray-600 mt-3">
+            Selected {selectedFriendsForMeal.length} friend(s)
+          </p>
+        </div>
+
+        <h3 className="text-lg font-bold text-gray-800 mb-4">Select friends</h3>
+        
+        {friends.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-md p-12 text-center">
+            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-xl text-gray-600 mb-2 font-bold">No friends yet</p>
+            <p className="text-gray-500">Add friends first to share meals!</p>
+          </div>
+        ) : (
+          <>
+            {friends.map(friend => {
+              const isSelected = selectedFriendsForMeal.includes(friend.id);
+              return (
+                <div 
+                  key={friend.id} 
+                  className={`bg-white rounded-xl shadow-md p-6 mb-4 cursor-pointer transition-all ${
+                    isSelected ? 'ring-4 ring-orange-500' : ''
+                  }`}
+                  onClick={() => toggleFriendSelection(friend.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="text-4xl">{friend.avatar || '🥗'}</div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-800">{friend.name}</h3>
+                        <p className="text-sm text-gray-500">@{friend.username}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Flame className="w-4 h-4 text-orange-500" />
+                          <span className="text-sm text-gray-600">{friend.streak || 0} day streak</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className={`w-8 h-8 rounded-full border-4 flex items-center justify-center ${
+                      isSelected ? 'bg-orange-500 border-orange-500' : 'bg-white border-gray-300'
+                    }`}>
+                      {isSelected && <span className="text-white text-lg">✓</span>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            <button
+              onClick={sendMealToFriends}
+              disabled={selectedFriendsForMeal.length === 0}
+              className={`w-full py-3 rounded-lg font-bold transition-all mb-2 ${
+                selectedFriendsForMeal.length === 0
+                  ? 'bg-gray-200 text-gray-500'
+                  : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white'
+              }`}
+            >
+              Send to {selectedFriendsForMeal.length} Friend{selectedFriendsForMeal.length !== 1 ? 's' : ''}
+            </button>
+          </>
+        )}
+
+        <button
+          onClick={() => {
+            setSelectedFriendsForMeal([]);
+            setCurrentScreen('suggestions');
+          }}
+          className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-bold"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const BudgetScreen = ({ budget, setBudget, trackActivity }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempBudget, setTempBudget] = useState(budget);
+
+  const saveBudget = () => {
+    const oldBudget = budget;
+    setBudget(tempBudget);
+    setIsEditing(false);
+    
+    trackActivity('change_budget', {
+      old_budget: oldBudget,
+      new_budget: tempBudget,
+      timestamp: new Date().toISOString()
+    });
+  };
+
+  return (
+    <div className="pb-20">
+      <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-6">
+        <h2 className="text-3xl font-bold mb-2 text-white">Your Budget</h2>
+        <p className="opacity-90">Track your meal spending</p>
+      </div>
+      
+      <div className="p-4 max-w-4xl mx-auto">
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-green-100">
+          <div className="text-center mb-6">
+            <p className="text-gray-600 mb-2">Weekly Budget</p>
+            
+            {isEditing ? (
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold text-gray-800">KSh</span>
+                  <input
+                    type="number"
+                    value={tempBudget}
+                    onChange={(e) => setTempBudget(Number(e.target.value))}
+                    className="text-4xl font-bold text-gray-800 text-center border-2 border-green-500 rounded-lg px-4 py-2 w-56 focus:outline-none"
+                    min="1000"
+                    max="50000"
+                  />
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <button onClick={saveBudget} className="bg-green-500 text-white px-6 py-2 rounded-lg font-bold">
+                    Save
+                  </button>
+                  <button 
+                    onClick={() => { setTempBudget(budget); setIsEditing(false); }} 
+                    className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-bold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                <span className="text-5xl font-bold text-gray-800">KSh {budget}</span>
+                <button onClick={() => setIsEditing(true)} className="text-green-600 font-bold hover:underline">
+                  ✏️ Edit Budget
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 text-center">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-gray-600 text-sm">Daily Average</p>
+              <p className="text-2xl font-bold text-blue-600">KSh {Math.round(budget / 7)}</p>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <p className="text-gray-600 text-sm">Per Meal</p>
+              <p className="text-2xl font-bold text-purple-600">KSh {Math.round(budget / 21)}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Budget Tips</h3>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-2">
+              <span className="text-green-500 text-xl font-bold">✓</span>
+              <span className="text-gray-700">Shop at local markets for fresh produce at lower prices</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-green-500 text-xl font-bold">✓</span>
+              <span className="text-gray-700">Share ingredients with friends to reduce waste and costs</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SuggestionsScreen = ({ 
+  maxMealBudget, 
+  setMaxMealBudget, 
+  selectedCategory, 
+  setSelectedCategory, 
+  searchQuery, 
+  setSearchQuery, 
+  filteredMeals, 
+  setViewingRecipe, 
+  selectMeal, 
+  setCurrentScreen, 
+  trackActivity 
+}) => {
+  const [isEditingBudget, setIsEditingBudget] = useState(false);
+  const [tempMaxBudget, setTempMaxBudget] = useState(maxMealBudget);
+
+  const saveMealBudget = () => {
+    const oldMaxBudget = maxMealBudget;
+    setMaxMealBudget(tempMaxBudget);
+    setIsEditingBudget(false);
+    
+    trackActivity('change_max_meal_budget', {
+      old_max_budget: oldMaxBudget,
+      new_max_budget: tempMaxBudget,
+      timestamp: new Date().toISOString()
+    });
+  };
+
+  return (
+    <div className="pb-20">
+      <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-6">
+        <h2 className="text-2xl font-bold mb-2 text-white">Today's Suggestions</h2>
+        <p className="text-base opacity-90">Delicious meals within your budget</p>
+      </div>
+      
+      <div className="p-4 max-w-6xl mx-auto">
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-orange-100">
+          <div className="mb-6">
+            <label className="text-lg font-bold text-gray-800 mb-3 block">Max Meal Budget</label>
+            
+            {isEditingBudget ? (
+              <div className="flex items-center gap-3">
+                <span className="text-2xl font-bold text-gray-800">KSh</span>
+                <input
+                  type="number"
+                  value={tempMaxBudget}
+                  onChange={(e) => setTempMaxBudget(Number(e.target.value))}
+                  className="text-2xl font-bold text-orange-600 border-2 border-orange-500 rounded-lg px-3 py-2 w-32 focus:outline-none"
+                  min="50"
+                  max="1000"
+                />
+                <button onClick={saveMealBudget} className="bg-orange-500 text-white px-4 py-2 rounded-lg font-semibold">
+                  Save
+                </button>
+                <button onClick={() => { setTempMaxBudget(maxMealBudget); setIsEditingBudget(false); }} className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold">
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="text-3xl font-bold text-orange-600">KSh {maxMealBudget}</span>
+                <button onClick={() => setIsEditingBudget(true)} className="text-orange-600 hover:text-orange-700 font-semibold text-sm">
+                  ✏️ Edit
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="text-lg font-bold text-gray-800 mb-3 block">Meal Category</label>
+            <div className="flex gap-2 flex-wrap">
+              {['All', 'Breakfast', 'Lunch', 'Dinner'].map(category => (
+                <button
+                  key={category}
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    trackActivity('filter_category', { category: category, timestamp: new Date().toISOString() });
+                  }}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                    selectedCategory === category
+                      ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6">
+              <label className="text-lg font-bold text-gray-800 mb-3 block">Search Meals</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by name, ingredients..."
+                  className="w-full p-3 pr-10 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:outline-none"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {filteredMeals.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-md p-12 text-center">
+            <p className="text-xl text-gray-600 mb-2">No meals found</p>
+            <p className="text-gray-500">Try increasing your budget or search for something else</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4">
+            {filteredMeals.map(meal => (
+              <div key={meal.id} className="bg-white rounded-xl shadow-md p-6 border border-gray-50">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">{meal.name}</h3>
+                    <span className="inline-block mt-1 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      {meal.category}
+                    </span>
+                  </div>
+                  <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold">
+                    KSh {meal.budget}
+                  </span>
+                </div>
+                
+                <div className="flex gap-2 mt-4">
+                  <button onClick={() => setViewingRecipe(meal)} className="flex-1 bg-blue-500 text-white py-2 rounded-lg font-bold">
+                    View
+                  </button>
+                  <button onClick={() => { selectMeal(meal); setCurrentScreen('share'); }} className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white py-2 rounded-lg font-bold">
+                    Share
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const FeedbackScreen = ({ submitFeedback, trackActivity }) => {
+  const [feedback, setFeedback] = useState('');
+
+  return (
+    <div className="pb-20">
+      <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-6">
+        <h2 className="text-3xl font-bold mb-2 text-white">Feedback</h2>
+        <p className="opacity-90">Help us improve DishiStudio</p>
+      </div>
+      
+      <div className="p-4 max-w-4xl mx-auto">
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-blue-50">
+          <label className="text-lg font-bold text-gray-800 mb-3 block">
+            Share your thoughts
+          </label>
+          <textarea
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+            placeholder="What do you think about DishiStudio? Any suggestions?"
+            className="w-full p-4 border border-gray-300 rounded-lg mb-4 h-40 resize-none focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+          
+          <button
+            onClick={() => {
+              if (feedback.trim()) {
+                submitFeedback(feedback);
+                setFeedback('');
+              }
+            }}
+            className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 rounded-lg font-bold hover:shadow-lg transition-all"
+          >
+            Submit Feedback
+          </button>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-gray-50">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Quick Feedback</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <button 
+              onClick={() => {
+                trackActivity('quick_feedback', { type: 'love_it', timestamp: new Date().toISOString() });
+                alert('Thanks for the love! ❤️');
+              }}
+              className="p-3 border-2 border-gray-100 rounded-lg font-medium hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
+              😊 Love it!
+            </button>
+            <button 
+              onClick={() => {
+                trackActivity('quick_feedback', { type: 'need_more_meals', timestamp: new Date().toISOString() });
+                alert('Thanks! We\'ll add more meals soon! 🍽️');
+              }}
+              className="p-3 border-2 border-gray-100 rounded-lg font-medium hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
+              🤔 Need more meals
+            </button>
+            <button 
+              onClick={() => {
+                trackActivity('quick_feedback', { type: 'budget_helpful', timestamp: new Date().toISOString() });
+                alert('Glad the budget feature helps! 💰');
+              }}
+              className="p-3 border-2 border-gray-100 rounded-lg font-medium hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
+              💰 Budget helpful
+            </button>
+            <button 
+              onClick={() => {
+                trackActivity('quick_feedback', { type: 'love_streaks', timestamp: new Date().toISOString() });
+                alert('Keep those streaks going! 🔥');
+              }}
+              className="p-3 border-2 border-gray-100 rounded-lg font-medium hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
+              👥 Love streaks
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const MealPlannerApp = () => {
   const [currentScreen, setCurrentScreen] = useState('home');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const searchRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+  // Check if the URL contains the recovery type
+  const hash = window.location.hash;
+  if (hash && hash.includes('type=recovery')) {
+    setCurrentScreen('reset-password');
+  }
+}, []);
 
 // Auto-focus when component loads
 useEffect(() => {
@@ -211,85 +869,302 @@ React.useEffect(() => {
 }, [mealHistory, user]);
 
 const handleForgotPassword = async (email) => {
-    if (!email) {
-      alert("Please enter your email address first.");
+  if (!email) {
+    alert("Please enter your email address first.");
+    return;
+  }
+
+  try {
+    // Get the current URL origin (works for localhost or deployed site)
+    const redirectTo = `${window.location.origin}/#type=recovery`;
+    
+    const url = `${supabaseUrl}/auth/v1/recover`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'apikey': supabaseAnonKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        email,
+        options: {
+          redirectTo: redirectTo // Add this to specify where to redirect
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.msg || error.message);
+    }
+
+    alert("Check your email! A password reset link has been sent.");
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+};
+
+   const handleUpdatePassword = async (newPassword) => {
+  if (!newPassword || newPassword.length < 6) {
+    alert("Password must be at least 6 characters");
+    return;
+  }
+
+  try {
+    // Extract the access token from the URL hash
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.substring(1));
+    const accessToken = params.get('access_token');
+    
+    if (!accessToken) {
+      alert("Invalid or expired reset link. Please request a new one.");
       return;
     }
 
-    try {
-      const url = `${supabaseUrl}/auth/v1/recover`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'apikey': supabaseAnonKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email })
+    const url = `${supabaseUrl}/auth/v1/user`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${accessToken}`, // Use the token from URL
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ password: newPassword })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Failed to update password");
+    }
+
+    alert("Password updated successfully! Please login with your new password.");
+    
+    // Clear the hash and redirect to login
+    window.location.hash = '';
+    setCurrentScreen('login');
+    
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+};
+
+   const ResetPasswordScreen = () => {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const handleSubmit = () => {
+    if (!newPassword || newPassword.length < 6) {
+      alert("Password must be at least 6 characters");
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      alert("Passwords don't match!");
+      return;
+    }
+    
+    handleUpdatePassword(newPassword);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-pink-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+        <div className="text-center mb-6">
+          <div className="text-5xl mb-4">🔐</div>
+          <h2 className="text-2xl font-bold text-gray-800">Set New Password</h2>
+          <p className="text-sm text-gray-600 mt-2">Choose a strong password for your account</p>
+        </div>
+        
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            New Password
+          </label>
+          <input
+            type="password"
+            placeholder="Enter new password (min 6 characters)"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+          />
+        </div>
+        
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Confirm Password
+          </label>
+          <input
+            type="password"
+            placeholder="Re-enter your password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+          />
+        </div>
+        
+        <button
+          onClick={handleSubmit}
+          className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
+        >
+          Update Password
+        </button>
+        
+        <button
+          onClick={() => setCurrentScreen('login')}
+          className="w-full mt-3 text-gray-600 hover:text-gray-800 text-sm font-medium"
+        >
+          Back to Login
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const handleLogin = async (email, password) => {
+  setLoading(true);
+  try {
+    const supabaseUrl = 'https://ltrdgyraevtxwroukxkt.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cmRneXJhZXZ0eHdyb3VreGt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyODA5MDEsImV4cCI6MjA4MTg1NjkwMX0.hERWWr2FjKX9zJJVU3j8JjE2y1ZKJeQCsHyrm1yueEI';
+    const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    const { data, error } = await client.auth.signInWithPassword({
+      email: email.trim(),
+      password: password,
+    });
+
+    if (error) throw error;
+
+    if (data?.user) {
+      // 1. Point to 'users' instead of 'profiles'
+const { data: profile, error: profileError } = await client
+  .from('users') 
+  .select('*')
+  .eq('id', data.user.id)
+  .single();
+
+if (profileError) console.error("Profile error:", profileError);
+
+const userData = {
+  id: data.user.id,
+  email: data.user.email,
+  // Map the correct columns from your SQL table
+  username: profile?.username || data.user.email, 
+  name: profile?.full_name || 'Dishi Member'
+};
+
+      // 1. Save to Storage FIRST so it's available on refresh
+      localStorage.setItem('dishiUser', JSON.stringify(userData));
+      
+      // 2. Update States
+      setUser(userData);
+      setIsLoggedIn(true);
+      
+      // 3. THIS FIXES THE BLANK MIDDLE: Force the view to 'home' immediately
+      setCurrentScreen('suggestions'); // Use 'suggestions' or whatever you want the home screen to be
+
+      // 4. Trigger data fetch immediately using the data we just got
+      // (Bypasses the delay of waiting for the 'user' state to refresh)
+      await fetchFriendRequests(data.user.id);
+      await fetchFriends(data.user.id);
+    }
+  } catch (error) {
+    console.error("Login detail error:", error);
+    alert("Login failed: " + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const renderContent = () => {
+  // If not logged in, the main logic should handle the Login/Signup screen
+  if (!isLoggedIn) return null;
+
+  switch (currentScreen) {
+    case 'home':
+      return (
+        <div className="p-4">
+          <h2 className="text-xl font-bold mb-4">Welcome back, {user?.name}!</h2>
+          {/* Add your Dashboard/Main content here */}
+          <div className="bg-orange-50 p-6 rounded-2xl border-2 border-orange-100">
+            <p className="text-orange-800">Select a meal to get started with your streak!</p>
+          </div>
+        </div>
+      );
+    case 'planner':
+      return <div className="p-4"><h3>Meal Planner Screen</h3></div>;
+    case 'friends':
+      // This is where your Friend Request UI from earlier goes
+      return <FriendsScreen />; 
+    case 'profile':
+      return <div className="p-4"><h3>Your Profile Settings</h3></div>;
+    default:
+      return <div className="p-4"><h3>Home Screen</h3></div>;
+  }
+};
+
+  const handleRegister = async (name, email, password, username, setIsRegistering) => {
+  // 1. Basic Validation
+  if (!name || !email || !password || !username) {
+    alert("Please fill in all fields");
+    return;
+  }
+
+  if (password.length < 6) {
+    alert("Password must be at least 6 characters");
+    return;
+  }
+
+  try {
+    // 2. Create the account in Supabase Authentication
+    const authResponse = await fetch(`${supabaseUrl}/auth/v1/signup`, {
+      method: 'POST',
+      headers: {
+        'apikey': supabaseAnonKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password,
+        // This 'data' object stores info directly in the Auth user metadata
+        data: {
+          full_name: name,
+          user_name: username
+        }
+      })
+    });
+
+    const authData = await authResponse.json();
+
+    if (!authResponse.ok) {
+      throw new Error(authData.msg || authData.message || "Registration failed");
+    }
+
+    // 3. Store the profile in your public 'users' table 
+    // This makes the user "visible" in your regular database editor
+    if (authData.id || authData.user?.id) {
+      const userId = authData.id || authData.user.id;
+      
+      await supabaseFetch('users', '', 'POST', {
+        id: userId,
+        email: email,
+        username: username,
+        full_name: name,
+        created_at: new Date().toISOString(),
+        streak: 0
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.msg || error.message);
-      }
-
-      alert("Check your email! A password reset link has been sent.");
-    } catch (err) {
-      alert("Error: " + err.message);
     }
-  }; 
 
-   const handleLogin = (email, password) => {
-    // Get user from localStorage
-    const users = JSON.parse(localStorage.getItem('allUsers') || '[]');
-    const foundUser = users.find(u => u.email === email && u.password === password);
+    alert("Registration successful! You can now log in.");
     
-    if (!foundUser) {
-      alert('Invalid email or password');
-      return;
+    // 4. Switch the UI back to the Login screen
+    if (setIsRegistering) {
+      setIsRegistering(false);
     }
-    
-    setUser({ name: foundUser.name, email: foundUser.email, username: foundUser.username });
-    setIsLoggedIn(true);
-    setCurrentScreen('suggestions');
-    
-    sendToSupabase('user_activity', {
-      user_email: email,
-      user_name: foundUser.name,
-      action_type: 'login',
-      action_details: { timestamp: new Date().toISOString() }
-    });
-  };
 
-    const handleRegister = (name, email, password, username) => {
-    // Get all users
-    const users = JSON.parse(localStorage.getItem('allUsers') || '[]');
-    
-    // Check if username or email already exists
-    if (users.find(u => u.username === username)) {
-      alert('Username already taken');
-      return;
-    }
-    if (users.find(u => u.email === email)) {
-      alert('Email already registered');
-      return;
-    }
-    
-    // Create new user
-    const newUser = { name, email, password, username, id: Date.now() };
-    users.push(newUser);
-    localStorage.setItem('allUsers', JSON.stringify(users));
-    
-    setUser({ name, email, username });
-    setIsLoggedIn(true);
-    setCurrentScreen('suggestions');
-    
-    sendToSupabase('user_activity', {
-      user_email: email,
-      user_name: name,
-      action_type: 'register',
-      action_details: { timestamp: new Date().toISOString(), username }
-    });
-  };
+  } catch (error) {
+    console.error("Registration error:", error);
+    alert(error.message);
+  }
+};
 
   const trackMeal = (meal) => {
   const existingMeal = mealHistory.find(m => m.id === meal.id);
@@ -373,6 +1248,48 @@ const findSimilarMeals = (meal) => {
   return similar.slice(0, 3);
 };
 
+const handleSignUp = async (email, password, username, fullName) => {
+  setLoading(true);
+  try {
+    const supabaseUrl = 'https://YOUR_PROJECT_URL.supabase.co';
+    const supabaseKey = 'YOUR_ANON_KEY';
+    const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    const { data: authData, error: authError } = await client.auth.signUp({
+      email,
+      password,
+    });
+
+    if (authError) throw authError;
+
+    if (authData.user) {
+      await client.from('profiles').insert([
+        {
+          id: authData.user.id,
+          username: username.toLowerCase().trim(),
+          full_name: fullName,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      const newUser = {
+        id: authData.user.id,
+        email: email,
+        username: username,
+        name: fullName
+      };
+      
+      setUser(newUser);
+      setIsLoggedIn(true);
+      localStorage.setItem('dishiUser', JSON.stringify(newUser));
+    }
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 const searchUsers = async () => {
   if (!searchUsername.trim()) return;
 
@@ -415,20 +1332,55 @@ const removeFriend = async (friendId) => {
 };
 
 const sendFriendRequest = async (targetUser) => {
-  try {
-    const body = { 
-      sender_id: user.id, 
-      receiver_id: targetUser.id, 
-      status: 'pending' 
-    };
-    
-    // Using our new fetcher with POST method (added logic below)
-    await supabaseFetch('friendships', '', 'POST', body);
+  // 1. Prevent sending a request to yourself
+  if (targetUser.id === user.id) {
+    alert("You cannot add yourself as a friend.");
+    return;
+  }
 
-    alert(`Request sent to @${targetUser.username}`);
-    setShowAddFriend(false);
+  try {
+    // 2. Check if a request already exists between these two users
+    const { data: existingRequest, error: checkError } = await supabase
+      .from('friend_requests')
+      .select('id, status')
+      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id})`);
+
+    if (existingRequest && existingRequest.length > 0) {
+      const status = existingRequest[0].status;
+      alert(`A friend request is already ${status}.`);
+      return;
+    }
+
+    // 3. Insert the new request into Supabase
+    const { error } = await supabase
+      .from('friend_requests')
+      .insert([
+        {
+          sender_id: user.id,
+          receiver_id: targetUser.id,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        }
+      ]);
+
+    if (error) throw error;
+
+    // 4. Track the activity for analytics
+    trackActivity('send_friend_request', {
+      to_user_id: targetUser.id,
+      to_username: targetUser.username,
+      timestamp: new Date().toISOString()
+    });
+
+    alert(`Friend request sent to @${targetUser.username}!`);
+    
+    // 5. Clear search results to refresh the UI
+    setSearchUsername('');
+    setSearchResults([]);
+    
   } catch (error) {
-    alert("Request failed: " + error.message);
+    console.error('Error sending friend request:', error.message);
+    alert('Failed to send request: ' + error.message);
   }
 };
 
@@ -491,31 +1443,44 @@ const fetchFriends = async () => {
 };
 
 // Function to get pending requests sent TO you
-const fetchFriendRequests = async () => {
+const fetchFriendRequests = async (userId) => {
+  if (!userId) return;
+
   try {
-    const { data, error } = await supabase
-      .from('friendships')
+    // 1. Get the client from the window
+    const supabaseUrl = 'YOUR_PROJECT_URL';
+    const supabaseKey = 'YOUR_ANON_KEY';
+    const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    // 2. Build the query step-by-step to avoid chaining errors
+    let query = client
+      .from('friend_requests')
       .select(`
-        id,
-        sender_id,
-        status,
-        sender:users!friendships_sender_id_fkey(id, username, full_name)
-      `)
-      .eq('receiver_id', user.id)
-      .eq('status', 'pending');
+        id, 
+        status, 
+        sender_id, 
+        receiver_id,
+        sender:sender_id ( username, full_name )
+      `);
+
+    // Add filters one by one
+    query = query.eq('receiver_id', userId);
+    query = query.eq('status', 'pending');
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
-    const formattedRequests = data.map(req => ({
-      id: req.id,
-      fromUsername: req.sender.username,
-      fromName: req.sender.full_name || req.sender.username,
-      status: req.status
-    }));
-
-    setFriendRequests(formattedRequests);
-  } catch (err) {
-    console.error("Error fetching requests:", err.message);
+    if (data) {
+      const formatted = data.map(req => ({
+        ...req,
+        sender_name: req.sender?.full_name || 'Unknown User',
+        sender_username: req.sender?.username || 'unknown'
+      }));
+      setFriendRequests(formatted);
+    }
+  } catch (error) {
+    console.error('Error fetching requests:', error.message);
   }
 };
 
@@ -526,17 +1491,26 @@ const fetchFriendRequests = async () => {
 
   const submitFeedback = async (text) => {
   if (!text.trim()) return;
+
+  const payload = {
+    feedback_text: text,
+    user_email: user?.email || 'anonymous@example.com',
+    user_id: user?.id || null,
+    created_at: new Date().toISOString()
+  };
+
   try {
-    const body = {
-      user_id: user?.id,
-      user_email: user?.email,
-      feedback_text: text
-    };
-    await supabaseFetch('feedback', '', 'POST', body);
-    alert("Asante! Feedback received.");
-  } catch (err) {
-    console.error(err);
-    alert("Could not send feedback. Try again later.");
+    const result = await supabaseFetch('feedback', '', 'POST', payload);
+    
+    if (result) {
+      alert("Thank you for your feedback!");
+      trackActivity('submit_feedback', { feedback_length: text.length });
+    } else {
+      alert("Failed to send feedback. Please try again.");
+    }
+  } catch (error) {
+    console.error("Feedback error:", error);
+    alert("Error sending feedback: " + error.message);
   }
 };
 
@@ -562,16 +1536,34 @@ const fetchFriendRequests = async () => {
   }
 };
 
-  const trackActivity = (actionType, actionDetails) => {
-    if (user) {
-      sendToSupabase('user_activity', {
-        user_email: user.email,
-        user_name: user.name,
-        action_type: actionType,
-        action_details: actionDetails
-      });
+  const trackActivity = async (action, details = {}) => {
+  if (!user?.id) {
+    console.log("No user ID, skipping activity track");
+    return;
+  }
+  
+  try {
+    const payload = {
+      user_id: user.id,
+      user_email: user.email, // ADD THIS LINE
+      action_type: action,
+      action_details: details,
+      created_at: new Date().toISOString()
+    };
+    
+    console.log("Tracking activity:", payload);
+    
+    const result = await supabaseFetch('user_activity', '', 'POST', payload);
+    
+    if (result) {
+      console.log("Activity tracked successfully:", result);
+    } else {
+      console.error("Failed to track activity");
     }
-  };
+  } catch (error) {
+    console.error("Activity tracking error:", error);
+  }
+};
 
   const NavBar = () => (
     <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-4 shadow-lg">
@@ -613,846 +1605,113 @@ const fetchFriendRequests = async () => {
     </div>
   );
 
-  const HomeScreen = () => (
-    <div className="min-h-screen bg-gradient-to-b from-orange-100 to-pink-100 flex items-center justify-center p-4 pb-24">
-    <div className="text-center relative z-10">
-      <div className="text-8xl mb-6">🍽️</div>
-      <h1 className="text-5xl font-bold text-purple-700 mb-4 drop-shadow-lg">DishiStudio</h1>
-      <p className="text-xl text-purple-600 mb-8 drop-shadow-md">Share meals, build streaks with friends</p>
-      <button
-        onClick={() => setCurrentScreen('login')}
-        className="bg-orange-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-orange-700 transition shadow-lg"
-      >
-        Get Started
-      </button>
-    </div>
-  </div>
-);
-
   const LoginScreen = () => {
-    const [formData, setFormData] = useState({
-      email: '',
-      password: '',
-      name: '',
-      username: ''
-    });
-    const [isRegistering, setIsRegistering] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    name: '',
+    username: ''
+  });
+  const [isRegistering, setIsRegistering] = useState(false);
 
-    const handleInputChange = (field, value) => {
-      setFormData(prev => ({ ...prev, [field]: value }));
-    };
-
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-orange-50 to-pink-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-            {isRegistering ? 'Create Account' : 'Welcome Back'}
-          </h2>
-          
-          {isRegistering && (
-            <>
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  placeholder="Choose a unique username"
-                  value={formData.username}
-                  onChange={(e) => handleInputChange('username', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg"
-                />
-              </div>
-            </>
-          )}
-          
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg"
-            />
-          </div>
-          
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={(e) => handleInputChange('password', e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg"
-            />
-            
-            {/* --- ADD THESE 10 LINES BELOW --- */}
-            {!isRegistering && (
-              <div className="flex justify-end mt-2">
-                <button
-                  type="button"
-                  onClick={() => handleForgotPassword(formData.email)}
-                  className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition-colors"
-                >
-                  Forgot Password?
-                </button>
-              </div>
-            )}
-            {/* --- END OF ADDITION --- */}
-          </div>
-          
-          <button
-            onClick={() => isRegistering 
-              ? handleRegister(formData.name, formData.email, formData.password, formData.username) 
-              : handleLogin(formData.email, formData.password)}
-            className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all mb-4"
-          >
-            {isRegistering ? 'Register' : 'Login'}
-          </button>
-          
-          <button
-            onClick={() => setIsRegistering(!isRegistering)}
-            className="w-full text-gray-600 hover:text-gray-800"
-          >
-            {isRegistering ? 'Already have an account? Login' : "Don't have an account? Register"}
-          </button>
-        </div>
-      </div>
-    );
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
-
-  const SuggestionsScreen = () => {
-    const [isEditingBudget, setIsEditingBudget] = useState(false);
-    const [tempMaxBudget, setTempMaxBudget] = useState(maxMealBudget);
-
-    const saveMealBudget = () => {
-      const oldMaxBudget = maxMealBudget;
-      setMaxMealBudget(tempMaxBudget);
-      setIsEditingBudget(false);
-      
-      trackActivity('change_max_meal_budget', {
-        old_max_budget: oldMaxBudget,
-        new_max_budget: tempMaxBudget,
-        timestamp: new Date().toISOString()
-      });
-    };
-
-    return (
-      <div className="pb-20">
-        <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-6">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-2">Today's Suggestions</h2>
-          <p className="text-base text-gray-600">Delicious meals within your budget</p>
-        </div>
-        
-        <div className="p-4 max-w-6xl mx-auto">
-          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-            <div className="mb-6">
-              <label className="text-lg font-bold text-gray-800 mb-3 block">Max Meal Budget</label>
-              
-              {isEditingBudget ? (
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl font-bold text-gray-800">KSh</span>
-                  <input
-                    type="number"
-                    value={tempMaxBudget}
-                    onChange={(e) => setTempMaxBudget(Number(e.target.value))}
-                    className="text-2xl font-bold text-orange-600 border-2 border-orange-500 rounded-lg px-3 py-2 w-32"
-                    min="50"
-                    max="1000"
-                  />
-                  <button
-                    onClick={saveMealBudget}
-                    className="bg-orange-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-orange-600 transition-all"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => {
-                      setTempMaxBudget(maxMealBudget);
-                      setIsEditingBudget(false);
-                    }}
-                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-400 transition-all"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl font-bold text-orange-600">KSh {maxMealBudget}</span>
-                  <button
-                    onClick={() => setIsEditingBudget(true)}
-                    className="text-orange-600 hover:text-orange-700 font-semibold text-sm"
-                  >
-                    ✏️ Edit
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="text-lg font-bold text-gray-800 mb-3 block">Meal Category</label>
-              <div className="flex gap-2 flex-wrap">
-                {['All', 'Breakfast', 'Lunch', 'Dinner'].map(category => (
-                  <button
-                    key={category}
-                    onClick={() => {
-                      setSelectedCategory(category);
-                      trackActivity('filter_category', { category: category, timestamp: new Date().toISOString() });
-                    }}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                      selectedCategory === category
-                        ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-            <div className="mt-4">
-  <label className="text-lg font-bold text-gray-800 mb-3 block">Search Meals</label>
-  <div className="relative">
-    <input
-      ref={searchRef}
-      type="text"
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      onBlur={() => {
-        if (searchQuery) {
-          trackActivity('search_meals', { query: searchQuery, timestamp: new Date().toISOString() });
-        }
-      }}
-      placeholder="Search by name, ingredients, or description..."
-      className="w-full p-3 pr-10 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:outline-none"
-    />
-    {searchQuery && (
-      <button
-        onClick={() => setSearchQuery('')}
-        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-      >
-        ✕
-      </button>
-    )}
-  </div>
-  {searchQuery && (
-    <p className="text-sm text-gray-600 mt-2">
-      Found {filteredMeals.length} meal{filteredMeals.length !== 1 ? 's' : ''} matching "{searchQuery}"
-    </p>
-  )}
-</div>
-            </div>
-          </div>
-
-          {filteredMeals.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-md p-12 text-center">
-              <p className="text-xl text-gray-600 mb-2">No meals found</p>
-              <p className="text-gray-500">Try increasing your budget or selecting a different category</p>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-4">
-              {filteredMeals.map(meal => (
-                <div key={meal.id} className="bg-white rounded-xl shadow-md p-6 hover:shadow-xl transition-all">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-800">{meal.name}</h3>
-                      <span className="inline-block mt-1 text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                        {meal.category}
-                      </span>
-                    </div>
-                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
-                      KSh {meal.budget}
-                    </span>
-                  </div>
-                  
-                  {meal.culturalNote && (
-                    <div className="mb-3 text-sm text-gray-600 italic bg-orange-50 p-2 rounded border-l-2 border-orange-400">
-                      🇰🇪 {meal.culturalNote.substring(0, 60)}...
-                    </div>
-                  )}
-
-                  <div className="mb-3 flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-sm">
-                        {i < meal.healthScore ? '⭐' : '☆'}
-                      </span>
-                    ))}
-                    <span className="text-xs text-gray-500 ml-1">Health</span>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {meal.ingredients.slice(0, 3).map((ing, i) => (
-                      <span key={i} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm">
-                        {ing}
-                      </span>
-                    ))}
-                    {meal.ingredients.length > 3 && (
-                      <span className="text-gray-500 text-sm">+{meal.ingredients.length - 3} more</span>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        setViewingRecipe(meal);
-                        trackActivity('view_recipe', {
-                          meal_name: meal.name,
-                          meal_budget: meal.budget,
-                          meal_category: meal.category,
-                          timestamp: new Date().toISOString()
-                        });
-                      }}
-                      className="flex-1 bg-blue-500 text-white py-2 rounded-lg font-semibold hover:bg-blue-600 transition-all"
-                    >
-                      View Recipe
-                    </button>
-                    <button
-                      onClick={() => {
-                        selectMeal(meal);
-                        setCurrentScreen('share');
-                      }}
-                      className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white py-2 rounded-lg font-semibold hover:shadow-lg transition-all"
-                    >
-                      Share
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const BudgetScreen = () => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [tempBudget, setTempBudget] = useState(budget);
-
-    const saveBudget = () => {
-      const oldBudget = budget;
-      setBudget(tempBudget);
-      setIsEditing(false);
-      
-      trackActivity('change_budget', {
-        old_budget: oldBudget,
-        new_budget: tempBudget,
-        timestamp: new Date().toISOString()
-      });
-    };
-
-    return (
-      <div className="pb-20">
-        <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-6">
-          <h2 className="text-3xl font-bold mb-2">Your Budget</h2>
-          <p className="opacity-90">Track your meal spending</p>
-        </div>
-        
-        <div className="p-4 max-w-4xl mx-auto">
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <div className="text-center mb-6">
-              <p className="text-gray-600 mb-2">Weekly Budget</p>
-              
-              {isEditing ? (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-gray-800">KSh</span>
-                    <input
-                      type="number"
-                      value={tempBudget}
-                      onChange={(e) => setTempBudget(Number(e.target.value))}
-                      className="text-4xl font-bold text-gray-800 text-center border-2 border-green-500 rounded-lg px-4 py-2 w-56"
-                      min="1000"
-                      max="50000"
-                    />
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={saveBudget}
-                      className="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-600 transition-all"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => {
-                        setTempBudget(budget);
-                        setIsEditing(false);
-                      }}
-                      className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-semibold hover:bg-gray-400 transition-all"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-3">
-                  <span className="text-5xl font-bold text-gray-800">KSh {budget}</span>
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="text-green-600 hover:text-green-700 font-semibold"
-                  >
-                    ✏️ Edit Budget
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-gray-600 text-sm">Daily Average</p>
-                <p className="text-2xl font-bold text-blue-600">KSh {Math.round(budget / 7)}</p>
-              </div>
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <p className="text-gray-600 text-sm">Per Meal</p>
-                <p className="text-2xl font-bold text-purple-600">KSh {Math.round(budget / 21)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Budget Tips</h3>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 text-xl">✓</span>
-                <span className="text-gray-700">Shop at local markets for fresh produce at lower prices</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 text-xl">✓</span>
-                <span className="text-gray-700">Share ingredients with friends to reduce waste and costs</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const FriendsScreen = () => {
-  // 1. Filter pending requests where YOU are the receiver
-  // In a real app, you'll fetch these from Supabase in a useEffect
-  const myPendingRequests = friendRequests.filter(
-    req => req.receiver_id === user?.id && req.status === 'pending'
-  );
 
   return (
-    <div className="pb-20">
-      <div className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-6">
-        <h2 className="text-3xl font-bold mb-2">Friends</h2>
-        <p className="opacity-90">Connect and share meals</p>
-      </div>
-
-      <div className="p-4 max-w-4xl mx-auto">
-        {/* --- SECTION 1: INCOMING REQUESTS --- */}
-        {myPendingRequests.length > 0 && (
-          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 mb-4">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">
-              Friend Requests ({myPendingRequests.length})
-            </h3>
-            <div className="space-y-3">
-              {myPendingRequests.map(request => (
-                <div key={request.id} className="bg-white rounded-lg p-4 flex items-center justify-between shadow-sm">
-                  <div>
-                    {/* Note: We use sender_name from the database join */}
-                    <p className="font-semibold text-gray-800">{request.sender_name || 'New User'}</p>
-                    <p className="text-sm text-gray-500">@{request.sender_username}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleFriendRequest(request, true)}
-                      className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 transition-all"
-                    >
-                      Accept
-                    </button>
-                    <button
-                      onClick={() => handleFriendRequest(request, false)}
-                      className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-400 transition-all"
-                    >
-                      Decline
-                    </button>
-                  </div>
-                </div>
-              ))}
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-pink-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-orange-100">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+          {isRegistering ? 'Create Account' : 'Welcome Back'}
+        </h2>
+        
+        {isRegistering && (
+          <>
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Full Name
+              </label>
+              <input
+                type="text"
+                placeholder="Enter your full name"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+              />
             </div>
-          </div>
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Username
+              </label>
+              <input
+                type="text"
+                placeholder="Choose a unique username"
+                value={formData.username}
+                onChange={(e) => handleInputChange('username', e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+              />
+            </div>
+          </>
         )}
-
-        {/* --- SECTION 2: SEARCH & ADD FRIENDS --- */}
-        {showAddFriend && (
-          <div className="bg-white rounded-xl shadow-md p-6 mb-4 border border-purple-100">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Search Users</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1 block">
-                  Search by Username
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    ref={searchRef}
-                    type="text"
-                    value={searchUsername}
-                    onChange={(e) => setSearchUsername(e.target.value)}
-                    placeholder="Enter username"
-                    className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                    onKeyPress={(e) => e.key === 'Enter' && searchUsers()}
-                    autoComplete="off"
-                  />
-                  <button
-                    onClick={searchUsers}
-                    className="bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-600 transition-all"
-                  >
-                    Search
-                  </button>
-                </div>
-
-                {/* Search Results Display */}
-                {searchResults.length > 0 && (
-                  <div className="mt-6 border-t pt-4">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-                      Results ({searchResults.length})
-                    </p>
-                    <div className="space-y-2">
-                      {searchResults.map(u => (
-                        <div key={u.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-                          <div>
-                            <p className="font-semibold text-gray-800">{u.name}</p>
-                            <p className="text-sm text-gray-500">@{u.username}</p>
-                          </div>
-                          <button
-                            onClick={() => sendFriendRequest(u)}
-                            disabled={u.id === user?.id} // Can't add yourself
-                            className={`${
-                              u.id === user?.id ? 'bg-gray-300' : 'bg-gradient-to-r from-purple-500 to-indigo-500'
-                            } text-white px-4 py-2 rounded-lg font-semibold transition-all`}
-                          >
-                            {u.id === user?.id ? 'You' : 'Add Friend'}
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              
+        
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Email
+          </label>
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={formData.email}
+            onChange={(e) => handleInputChange('email', e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+          />
+        </div>
+        
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Password
+          </label>
+          <input
+            type="password"
+            placeholder="Enter your password"
+            value={formData.password}
+            onChange={(e) => handleInputChange('password', e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+          />
+          
+          {/* FORGOT PASSWORD LINK - Only shows on Login mode */}
+          {!isRegistering && (
+            <div className="flex justify-end mt-2">
               <button
-                onClick={() => {
-                  setShowAddFriend(false);
-                  setSearchUsername('');
-                  setSearchResults([]);
-                }}
-                className="w-full text-gray-500 py-2 text-sm hover:underline"
+                type="button"
+                onClick={() => handleForgotPassword(formData.email)}
+                className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition-colors"
               >
-                Close Search
+                Forgot Password?
               </button>
             </div>
-          </div>
-        )}
-
-        {/* --- SECTION 3: FRIENDS LIST --- */}
-        {friends.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center mb-4">
-            <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-               <span className="text-4xl text-gray-400">👥</span>
-            </div>
-            <p className="text-xl text-gray-600 mb-2 font-bold">No friends yet</p>
-            <p className="text-gray-500 mb-6">Search for users to start sharing meals!</p>
-            {!showAddFriend && (
-               <button 
-                 onClick={() => setShowAddFriend(true)}
-                 className="bg-purple-100 text-purple-700 px-6 py-2 rounded-full font-bold"
-               >
-                 Find People
-               </button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {friends.map(friend => (
-              <div key={friend.id} className="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-2xl">
-                      {friend.avatar || '🥗'}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-800">{friend.name}</h3>
-                      <p className="text-xs text-gray-500">@{friend.username}</p>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => removeFriend(friend.id)}
-                    className="text-gray-300 hover:text-red-500 transition-colors"
-                    title="Remove Friend"
-                  >
-                    <span className="text-xs font-bold uppercase">Remove</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Floating Toggle Button */}
-        {!showAddFriend && (
-          <button 
-            onClick={() => setShowAddFriend(true)}
-            className="fixed bottom-24 right-6 bg-purple-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl hover:scale-110 transition-transform">
-            +
-          </button>
-        )}
+          )}
+        </div>
+        
+        <button
+          onClick={() => isRegistering 
+            ? handleRegister(formData.name, formData.email, formData.password, formData.username, setIsRegistering) 
+            : handleLogin(formData.email, formData.password)}
+          className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all mb-4"
+        >
+          {isRegistering ? 'Register' : 'Login'}
+        </button>
+        
+        <button
+          onClick={() => setIsRegistering(!isRegistering)}
+          className="w-full text-gray-600 hover:text-gray-800 text-sm font-medium"
+        >
+          {isRegistering ? 'Already have an account? Login' : "Don't have an account? Register"}
+        </button>
       </div>
     </div>
   );
 };
-
-  const StreaksScreen = () => {
-    const longestStreak = friends.reduce((max, f) => Math.max(max, f.streak), 0);
-    const activeStreaks = friends.filter(f => f.streak > 0).length;
-
-    return (
-      <div className="pb-20">
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6">
-          <h2 className="text-3xl font-bold mb-2">Streaks</h2>
-          <p className="opacity-90">Keep the momentum going!</p>
-        </div>
-        
-        <div className="p-4 max-w-4xl mx-auto">
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-              <Flame className="w-12 h-12 text-orange-500 mx-auto mb-2" />
-              <p className="text-gray-600 text-sm">Longest Streak</p>
-              <p className="text-4xl font-bold text-orange-600">{longestStreak}</p>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-              <TrendingUp className="w-12 h-12 text-green-500 mx-auto mb-2" />
-              <p className="text-gray-600 text-sm">Active Streaks</p>
-              <p className="text-4xl font-bold text-green-600">{activeStreaks}</p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Leaderboard</h3>
-            <div className="space-y-3">
-              {friends
-                .sort((a, b) => b.streak - a.streak)
-                .map((friend, index) => (
-                  <div key={friend.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl font-bold text-gray-400">#{index + 1}</span>
-                      <span className="text-2xl">{friend.avatar}</span>
-                      <span className="font-semibold text-gray-800">{friend.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Flame className="w-5 h-5 text-orange-500" />
-                      <span className="text-xl font-bold text-orange-600">{friend.streak}</span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const ShareScreen = () => {
-    const toggleFriendSelection = (friendId) => {
-      setSelectedFriendsForMeal(prev => 
-        prev.includes(friendId)
-          ? prev.filter(id => id !== friendId)
-          : [...prev, friendId]
-      );
-    };
-
-    return (
-      <div className="pb-20">
-        <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-6">
-          <h2 className="text-3xl font-bold mb-2">Share Meal</h2>
-          <p className="opacity-90">Send {selectedMeal?.name} to friends</p>
-        </div>
-        
-        <div className="p-4 max-w-4xl mx-auto">
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-2">{selectedMeal?.name}</h3>
-            <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
-              KSh {selectedMeal?.budget}
-            </span>
-            <p className="text-sm text-gray-600 mt-3">
-              Selected {selectedFriendsForMeal.length} friend(s)
-            </p>
-          </div>
-
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Select friends (tap to select multiple)</h3>
-          
-          {friends.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-md p-12 text-center">
-              <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-xl text-gray-600 mb-2">No friends yet</p>
-              <p className="text-gray-500">Add friends first to share meals!</p>
-            </div>
-          ) : (
-            <>
-              {friends.map(friend => {
-                const isSelected = selectedFriendsForMeal.includes(friend.id);
-                return (
-                  <div 
-                    key={friend.id} 
-                    className={`bg-white rounded-xl shadow-md p-6 mb-4 cursor-pointer transition-all ${
-                      isSelected ? 'ring-4 ring-orange-500' : ''
-                    }`}
-                    onClick={() => toggleFriendSelection(friend.id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="text-4xl">{friend.avatar}</div>
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-800">{friend.name}</h3>
-                          <p className="text-sm text-gray-500">@{friend.username}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Flame className="w-4 h-4 text-orange-500" />
-                            <span className="text-sm text-gray-600">{friend.streak} day streak</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {friend.receivedToday && (
-                          <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                            ✓ Sent today
-                          </span>
-                        )}
-                        <div className={`w-8 h-8 rounded-full border-4 flex items-center justify-center ${
-                          isSelected 
-                            ? 'bg-orange-500 border-orange-500' 
-                            : 'bg-white border-gray-300'
-                        }`}>
-                          {isSelected && <span className="text-white text-lg">✓</span>}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              <button
-                onClick={sendMealToFriends}
-                disabled={selectedFriendsForMeal.length === 0}
-                className={`w-full py-3 rounded-lg font-semibold transition-all mb-2 ${
-                  selectedFriendsForMeal.length === 0
-                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:shadow-lg'
-                }`}
-              >
-                Send to {selectedFriendsForMeal.length} Friend{selectedFriendsForMeal.length !== 1 ? 's' : ''}
-              </button>
-            </>
-          )}
-
-          <button
-            onClick={() => {
-              setSelectedFriendsForMeal([]);
-              setCurrentScreen('suggestions');
-            }}
-            className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-all"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  const FeedbackScreen = () => {
-    const [feedback, setFeedback] = useState('');
-
-    return (
-      <div className="pb-20">
-        <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-6">
-          <h2 className="text-3xl font-bold mb-2">Feedback</h2>
-          <p className="opacity-90">Help us improve DishiStudio</p>
-        </div>
-        
-        <div className="p-4 max-w-4xl mx-auto">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <label className="text-lg font-bold text-gray-800 mb-3 block">
-              Share your thoughts
-            </label>
-            <textarea
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              placeholder="What do you think about DishiStudio? Any suggestions?"
-              className="w-full p-4 border border-gray-300 rounded-lg mb-4 h-40 resize-none"
-            />
-            
-            <button
-              onClick={() => {
-                submitFeedback(feedback);
-                setFeedback('');
-              }}
-              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
-            >
-              Submit Feedback
-            </button>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Quick Feedback</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <button 
-                onClick={() => {
-                  trackActivity('quick_feedback', { type: 'love_it', timestamp: new Date().toISOString() });
-                  alert('Thanks for the love! ❤️');
-                }}
-                className="p-3 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all">
-                😊 Love it!
-              </button>
-              <button 
-                onClick={() => {
-                  trackActivity('quick_feedback', { type: 'need_more_meals', timestamp: new Date().toISOString() });
-                  alert('Thanks! We\'ll add more meals soon! 🍽️');
-                }}
-                className="p-3 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all">
-                🤔 Need more meals
-              </button>
-              <button 
-                onClick={() => {
-                  trackActivity('quick_feedback', { type: 'budget_helpful', timestamp: new Date().toISOString() });
-                  alert('Glad the budget feature helps! 💰');
-                }}
-                className="p-3 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all">
-                💰 Budget helpful
-              </button>
-              <button 
-                onClick={() => {
-                  trackActivity('quick_feedback', { type: 'love_streaks', timestamp: new Date().toISOString() });
-                  alert('Keep those streaks going! 🔥');
-                }}
-                className="p-3 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all">
-                👥 Love streaks
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   const RecipeModal = () => {
     if (!viewingRecipe) return null;
@@ -1584,21 +1843,100 @@ const fetchFriendRequests = async () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {!isLoggedIn && currentScreen === 'home' && <HomeScreen />}
-      {!isLoggedIn && currentScreen === 'login' && <LoginScreen />}
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* 1. AUTHENTICATION SCREENS (Before Login) */}
+      {!isLoggedIn && currentScreen === 'home' && (
+        <HomeScreen setCurrentScreen={setCurrentScreen} />
+      )}
       
+      {!isLoggedIn && currentScreen === 'login' && (
+        <LoginScreen 
+          handleLogin={handleLogin} 
+          setCurrentScreen={setCurrentScreen} 
+          loading={loading}
+        />
+      )}
+      
+      {currentScreen === 'reset-password' && (
+        <ResetPasswordScreen setCurrentScreen={setCurrentScreen} />
+      )}
+      
+      {/* 2. LOGGED IN APP STRUCTURE */}
       {isLoggedIn && (
         <>
-          <NavBar />
-          {currentScreen === 'suggestions' && <SuggestionsScreen />}
-          {currentScreen === 'budget' && <BudgetScreen />}
-          {currentScreen === 'friends' && <FriendsScreen />}
-          {currentScreen === 'streaks' && <StreaksScreen />}
-          {currentScreen === 'share' && <ShareScreen />}
-          {currentScreen === 'feedback' && <FeedbackScreen />}
-          <BottomNav />
-          <RecipeModal />
+          <NavBar user={user} />
+          
+          <main className="flex-1 overflow-y-auto pb-20">
+            {/* Logic: If just logged in or on suggestions, show suggestions */}
+            {(currentScreen === 'suggestions' || currentScreen === 'login') && (
+              <SuggestionsScreen 
+                maxMealBudget={maxMealBudget}
+                setMaxMealBudget={setMaxMealBudget}
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                filteredMeals={filteredMeals}
+                setViewingRecipe={setViewingRecipe}
+                selectMeal={selectMeal}
+                setCurrentScreen={setCurrentScreen}
+                trackActivity={trackActivity}
+              />
+            )}
+            
+            {currentScreen === 'budget' && (
+  <BudgetScreen 
+    budget={budget} 
+    setBudget={setBudget} 
+    trackActivity={trackActivity} 
+  />
+)}
+            
+            {currentScreen === 'friends' && (
+              <FriendsScreen 
+                user={user}
+                friends={friends}
+                friendRequests={friendRequests}
+                handleFriendRequest={handleFriendRequest}
+                sendFriendRequest={sendFriendRequest}
+                removeFriend={removeFriend}
+                searchUsers={searchUsers}
+                searchUsername={searchUsername}
+                setSearchUsername={setSearchUsername}
+                searchResults={searchResults}
+                showAddFriend={showAddFriend}
+                setShowAddFriend={setShowAddFriend}
+              />
+            )}
+            
+{currentScreen === 'streaks' && (
+  <StreaksScreen friends={friends} />
+)}
+
+{/* SHARE */}
+{currentScreen === 'share' && (
+  <ShareScreen 
+    selectedMeal={selectedMeal}
+    friends={friends}
+    selectedFriendsForMeal={selectedFriendsForMeal}
+    setSelectedFriendsForMeal={setSelectedFriendsForMeal}
+    sendMealToFriends={sendMealToFriends}
+    setCurrentScreen={setCurrentScreen}
+  />
+)}
+            {currentScreen === 'feedback' && (
+  <FeedbackScreen 
+    submitFeedback={submitFeedback} 
+    trackActivity={trackActivity} 
+  />
+)}
+          </main>
+
+          <BottomNav currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} />
+          <RecipeModal 
+            viewingRecipe={viewingRecipe} 
+            setViewingRecipe={setViewingRecipe} 
+          />
         </>
       )}
     </div>
