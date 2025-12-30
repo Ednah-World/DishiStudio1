@@ -26,14 +26,9 @@ const supabaseFetch = async (tableName, query = '', method = 'GET', body = null)
   }
 };
 
-// This tricks the rest of your app into not crashing
-const supabase = {
-  auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }) },
-  from: () => ({ 
-    select: () => ({ eq: () => ({ single: () => ({}) }) }),
-    insert: () => ({}), update: () => ({}), delete: () => ({}) 
-  })
-};
+// Create the REAL Supabase client
+const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
 // --- DATABASE CONNECTION END ---
 // This connects your old function calls to our new fetcher
 const sendToSupabase = supabaseFetch;
@@ -73,6 +68,13 @@ const FriendsScreen = ({
     req => req.receiver_id === user?.id && req.status === 'pending'
   );
 
+  // DEBUG: Log after myPendingRequests is defined
+  console.log("=== FRIENDS SCREEN DEBUG ===");
+  console.log("Current user:", user?.username, user?.id);
+  console.log("All friend requests:", friendRequests);
+  console.log("My pending requests:", myPendingRequests);
+  console.log("===========================");
+
   return (
     <div className="pb-20">
       <div className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-6">
@@ -97,13 +99,13 @@ const FriendsScreen = ({
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleFriendRequest(request, true)}
-                      className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold"
+                      className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600"
                     >
                       Accept
                     </button>
                     <button
                       onClick={() => handleFriendRequest(request, false)}
-                      className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold"
+                      className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-400"
                     >
                       Decline
                     </button>
@@ -115,6 +117,23 @@ const FriendsScreen = ({
         )}
 
         {/* --- SECTION 2: SEARCH & ADD FRIENDS --- */}
+        {!showAddFriend && friends.length === 0 && myPendingRequests.length === 0 && (
+          <div className="bg-white rounded-xl shadow-md p-12 text-center mb-4">
+            <p className="text-xl text-gray-600 mb-2 font-bold">No friends yet</p>
+            <button onClick={() => setShowAddFriend(true)} className="bg-purple-100 text-purple-700 px-6 py-2 rounded-full font-bold">
+              Find People
+            </button>
+          </div>
+        )}
+
+        {!showAddFriend && (friends.length > 0 || myPendingRequests.length > 0) && (
+          <div className="mb-4">
+            <button onClick={() => setShowAddFriend(true)} className="w-full bg-purple-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-purple-600">
+              + Add More Friends
+            </button>
+          </div>
+        )}
+
         {showAddFriend && (
           <div className="bg-white rounded-xl shadow-md p-6 mb-4 border border-purple-100">
             <h3 className="text-xl font-bold text-gray-800 mb-4">Search Users</h3>
@@ -135,7 +154,7 @@ const FriendsScreen = ({
                   />
                   <button
                     onClick={searchUsers}
-                    className="bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold"
+                    className="bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-600"
                   >
                     Search
                   </button>
@@ -147,6 +166,11 @@ const FriendsScreen = ({
                     <div className="space-y-2">
                       {searchResults.map(u => {
                         const isAlreadyFriend = friends.some(f => f.id === u.id);
+                        const hasPendingRequest = friendRequests.some(
+                          req => (req.sender_id === user?.id && req.receiver_id === u.id) ||
+                                 (req.sender_id === u.id && req.receiver_id === user?.id)
+                        );
+                        
                         return (
                           <div key={u.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                             <div>
@@ -155,14 +179,18 @@ const FriendsScreen = ({
                             </div>
                             <button
                               onClick={() => sendFriendRequest(u)}
-                              disabled={u.id === user?.id || isAlreadyFriend}
+                              disabled={u.id === user?.id || isAlreadyFriend || hasPendingRequest}
                               className={`px-4 py-2 rounded-lg font-semibold ${
-                                u.id === user?.id || isAlreadyFriend 
-                                  ? 'bg-gray-300 text-gray-500' 
-                                  : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                                u.id === user?.id 
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                                  : isAlreadyFriend 
+                                  ? 'bg-green-100 text-green-700 cursor-not-allowed' 
+                                  : hasPendingRequest
+                                  ? 'bg-yellow-100 text-yellow-700 cursor-not-allowed'
+                                  : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:shadow-lg'
                               }`}
                             >
-                              {u.id === user?.id ? 'You' : isAlreadyFriend ? 'Friend' : 'Add Friend'}
+                              {u.id === user?.id ? 'You' : isAlreadyFriend ? '✓ Friends' : hasPendingRequest ? 'Pending' : 'Add Friend'}
                             </button>
                           </div>
                         );
@@ -179,17 +207,9 @@ const FriendsScreen = ({
         )}
 
         {/* --- SECTION 3: FRIENDS LIST --- */}
-        {friends.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center mb-4">
-            <p className="text-xl text-gray-600 mb-2 font-bold">No friends yet</p>
-            {!showAddFriend && (
-               <button onClick={() => setShowAddFriend(true)} className="bg-purple-100 text-purple-700 px-6 py-2 rounded-full font-bold">
-                 Find People
-               </button>
-            )}
-          </div>
-        ) : (
+        {friends.length > 0 && (
           <div className="space-y-4">
+            <h3 className="text-lg font-bold text-gray-800">My Friends ({friends.length})</h3>
             {friends.map(friend => (
               <div key={friend.id} className="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
                 <div className="flex items-center justify-between">
@@ -202,7 +222,7 @@ const FriendsScreen = ({
                       <p className="text-xs text-gray-500">@{friend.username}</p>
                     </div>
                   </div>
-                  <button onClick={() => removeFriend(friend.id)} className="text-gray-300 hover:text-red-500">
+                  <button onClick={() => removeFriend(friend.id)} className="text-gray-400 hover:text-red-500 transition-colors">
                     <span className="text-xs font-bold uppercase">Remove</span>
                   </button>
                 </div>
@@ -215,9 +235,114 @@ const FriendsScreen = ({
   );
 };
 
-const StreaksScreen = ({ friends }) => {
-  const longestStreak = friends.reduce((max, f) => Math.max(max, f.streak || 0), 0);
-  const activeStreaks = friends.filter(f => (f.streak || 0) > 0).length;
+const StreaksScreen = ({ friends, user }) => {
+  const [streakData, setStreakData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchStreakData();
+    }
+  }, [user, friends]);
+
+  const fetchStreakData = async () => {
+    if (!user?.id) return;
+    
+    setLoading(true);
+    try {
+      // Fetch all meal sharing activities involving this user
+      const query = `?or=(sender_id.eq.${user.id},receiver_id.eq.${user.id})&action_type=eq.share_meal&select=*&order=created_at.desc`;
+      const activities = await supabaseFetch('user_activity', query);
+      
+      if (!activities || activities.length === 0) {
+        setStreakData([]);
+        setLoading(false);
+        return;
+      }
+
+      // Process streak data for each friend
+      const streaksWithFriends = friends.map(friend => {
+        // Get meals sent TO this friend
+        const sentToFriend = activities.filter(
+          act => act.sender_id === user.id && act.receiver_id === friend.id
+        );
+        
+        // Get meals received FROM this friend
+        const receivedFromFriend = activities.filter(
+          act => act.sender_id === friend.id && act.receiver_id === user.id
+        );
+
+        // Calculate streak (consecutive days with reciprocal sharing)
+        const streak = calculateStreak(sentToFriend, receivedFromFriend);
+        
+        // Calculate average meal price
+        const allMeals = [...sentToFriend, ...receivedFromFriend];
+        const avgPrice = allMeals.length > 0
+          ? Math.round(allMeals.reduce((sum, act) => sum + (act.action_details?.budget || 0), 0) / allMeals.length)
+          : 0;
+
+        // Get recent meals
+        const recentMeals = allMeals.slice(0, 5).map(act => ({
+          name: act.action_details?.meal_name || 'Unknown Meal',
+          price: act.action_details?.budget || 0,
+          sender: act.sender_id === user.id ? 'You' : friend.name,
+          date: new Date(act.created_at).toLocaleDateString()
+        }));
+
+        return {
+          ...friend,
+          streak,
+          sentCount: sentToFriend.length,
+          receivedCount: receivedFromFriend.length,
+          avgPrice,
+          recentMeals,
+          totalShared: allMeals.length
+        };
+      });
+
+      setStreakData(streaksWithFriends);
+    } catch (error) {
+      console.error('Error fetching streak data:', error);
+      setStreakData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateStreak = (sent, received) => {
+    // Group activities by date
+    const sentDates = new Set(sent.map(act => new Date(act.created_at).toDateString()));
+    const receivedDates = new Set(received.map(act => new Date(act.created_at).toDateString()));
+    
+    // Find dates where BOTH users shared meals
+    const mutualDates = [...sentDates].filter(date => receivedDates.has(date));
+    
+    if (mutualDates.length === 0) return 0;
+
+    // Sort dates and count consecutive days
+    const sortedDates = mutualDates
+      .map(d => new Date(d))
+      .sort((a, b) => b - a); // Most recent first
+    
+    let streak = 0;
+    let currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+
+    for (let date of sortedDates) {
+      const dayDiff = Math.floor((currentDate - date) / (1000 * 60 * 60 * 24));
+      
+      if (dayDiff === streak) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  };
+
+  const longestStreak = streakData.reduce((max, f) => Math.max(max, f.streak || 0), 0);
+  const activeStreaks = streakData.filter(f => (f.streak || 0) > 0).length;
 
   return (
     <div className="pb-20">
@@ -227,40 +352,116 @@ const StreaksScreen = ({ friends }) => {
       </div>
       
       <div className="p-4 max-w-4xl mx-auto">
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <Flame className="w-12 h-12 text-orange-500 mx-auto mb-2" />
-            <p className="text-gray-600 text-sm">Longest Streak</p>
-            <p className="text-4xl font-bold text-orange-600">{longestStreak}</p>
+        {loading ? (
+          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+            <p className="text-gray-600">Loading streak data...</p>
           </div>
-          
-          <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-            <TrendingUp className="w-12 h-12 text-green-500 mx-auto mb-2" />
-            <p className="text-gray-600 text-sm">Active Streaks</p>
-            <p className="text-4xl font-bold text-green-600">{activeStreaks}</p>
-          </div>
-        </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+                <Flame className="w-12 h-12 text-orange-500 mx-auto mb-2" />
+                <p className="text-gray-600 text-sm">Longest Streak</p>
+                <p className="text-4xl font-bold text-orange-600">{longestStreak}</p>
+                <p className="text-xs text-gray-500 mt-1">consecutive days</p>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+                <TrendingUp className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                <p className="text-gray-600 text-sm">Active Streaks</p>
+                <p className="text-4xl font-bold text-green-600">{activeStreaks}</p>
+                <p className="text-xs text-gray-500 mt-1">friends</p>
+              </div>
+            </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Leaderboard</h3>
-          <div className="space-y-3">
-            {[...friends]
-              .sort((a, b) => (b.streak || 0) - (a.streak || 0))
-              .map((friend, index) => (
-                <div key={friend.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-gray-400">#{index + 1}</span>
-                    <span className="text-2xl">{friend.avatar || '🥗'}</span>
-                    <span className="font-semibold text-gray-800">{friend.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Flame className="w-5 h-5 text-orange-500" />
-                    <span className="text-xl font-bold text-orange-600">{friend.streak || 0}</span>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </div>
+            {streakData.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+                <Flame className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-xl text-gray-600 mb-2 font-bold">No streaks yet</p>
+                <p className="text-gray-500">Share meals with friends to start building streaks!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold text-gray-800">Leaderboard</h3>
+                {streakData
+                  .sort((a, b) => (b.streak || 0) - (a.streak || 0))
+                  .map((friend, index) => (
+                    <div key={friend.id} className="bg-white rounded-xl shadow-lg p-6">
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl font-bold text-gray-400">#{index + 1}</span>
+                          <span className="text-3xl">{friend.avatar || '🥗'}</span>
+                          <div>
+                            <span className="font-bold text-lg text-gray-800">{friend.name}</span>
+                            <p className="text-xs text-gray-500">@{friend.username}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Flame className="w-6 h-6 text-orange-500" />
+                          <span className="text-2xl font-bold text-orange-600">{friend.streak || 0}</span>
+                        </div>
+                      </div>
+
+                      {/* Stats */}
+                      <div className="grid grid-cols-3 gap-3 mb-4">
+                        <div className="bg-blue-50 rounded-lg p-3 text-center">
+                          <p className="text-xs text-gray-600">Meals Sent</p>
+                          <p className="text-xl font-bold text-blue-600">{friend.sentCount}</p>
+                        </div>
+                        <div className="bg-green-50 rounded-lg p-3 text-center">
+                          <p className="text-xs text-gray-600">Meals Received</p>
+                          <p className="text-xl font-bold text-green-600">{friend.receivedCount}</p>
+                        </div>
+                        <div className="bg-purple-50 rounded-lg p-3 text-center">
+                          <p className="text-xs text-gray-600">Avg Price</p>
+                          <p className="text-xl font-bold text-purple-600">KSh {friend.avgPrice}</p>
+                        </div>
+                      </div>
+
+                      {/* Recent Meals */}
+                      {friend.recentMeals && friend.recentMeals.length > 0 && (
+                        <div className="border-t pt-4">
+                          <p className="text-sm font-bold text-gray-700 mb-2">Recent Meals Shared:</p>
+                          <div className="space-y-2">
+                            {friend.recentMeals.map((meal, idx) => (
+                              <div key={idx} className="flex justify-between items-center text-sm bg-gray-50 rounded-lg p-2">
+                                <div>
+                                  <span className="font-semibold text-gray-800">{meal.name}</span>
+                                  <span className="text-gray-500 text-xs ml-2">by {meal.sender}</span>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-semibold text-green-600">KSh {meal.price}</p>
+                                  <p className="text-xs text-gray-500">{meal.date}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Streak Info */}
+                      {friend.streak > 0 && (
+                        <div className="mt-4 bg-orange-50 border-l-4 border-orange-500 rounded p-3">
+                          <p className="text-sm text-orange-800">
+                            🔥 <strong>{friend.streak} day streak!</strong> Keep sharing meals daily to maintain it.
+                          </p>
+                        </div>
+                      )}
+
+                      {friend.totalShared === 0 && (
+                        <div className="mt-4 bg-gray-50 rounded p-3 text-center">
+                          <p className="text-sm text-gray-600">
+                            No meals shared yet. Send a meal to start your streak!
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -426,7 +627,13 @@ const BudgetScreen = ({ budget, setBudget, trackActivity }) => {
             ) : (
               <div className="flex flex-col items-center gap-3">
                 <span className="text-5xl font-bold text-gray-800">KSh {budget}</span>
-                <button onClick={() => setIsEditing(true)} className="text-green-600 font-bold hover:underline">
+                <button 
+                  onClick={() => { 
+                    setTempBudget(''); // Start blank when editing
+                    setIsEditing(true); 
+                  }} 
+                  className="text-green-600 font-bold hover:underline"
+                >
                   ✏️ Edit Budget
                 </button>
               </div>
@@ -477,16 +684,22 @@ const SuggestionsScreen = ({
   trackActivity 
 }) => {
   const [isEditingBudget, setIsEditingBudget] = useState(false);
-  const [tempMaxBudget, setTempMaxBudget] = useState(maxMealBudget);
+  const [tempMaxBudget, setTempMaxBudget] = useState(''); // CHANGED: Start blank
 
   const saveMealBudget = () => {
+    const newBudget = Number(tempMaxBudget) || maxMealBudget;
+    if (newBudget < 50) {
+      alert("Max meal budget must be at least KSh 50");
+      return;
+    }
+    
     const oldMaxBudget = maxMealBudget;
-    setMaxMealBudget(tempMaxBudget);
+    setMaxMealBudget(newBudget);
     setIsEditingBudget(false);
     
     trackActivity('change_max_meal_budget', {
       old_max_budget: oldMaxBudget,
-      new_max_budget: tempMaxBudget,
+      new_max_budget: newBudget,
       timestamp: new Date().toISOString()
     });
   };
@@ -509,22 +722,33 @@ const SuggestionsScreen = ({
                 <input
                   type="number"
                   value={tempMaxBudget}
-                  onChange={(e) => setTempMaxBudget(Number(e.target.value))}
+                  onChange={(e) => setTempMaxBudget(e.target.value)}
+                  placeholder={maxMealBudget.toString()}
                   className="text-2xl font-bold text-orange-600 border-2 border-orange-500 rounded-lg px-3 py-2 w-32 focus:outline-none"
                   min="50"
                   max="1000"
+                  onFocus={(e) => e.target.select()}
                 />
                 <button onClick={saveMealBudget} className="bg-orange-500 text-white px-4 py-2 rounded-lg font-semibold">
                   Save
                 </button>
-                <button onClick={() => { setTempMaxBudget(maxMealBudget); setIsEditingBudget(false); }} className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold">
+                <button 
+                  onClick={() => { setTempMaxBudget(''); setIsEditingBudget(false); }} 
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold"
+                >
                   Cancel
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-3">
                 <span className="text-3xl font-bold text-orange-600">KSh {maxMealBudget}</span>
-                <button onClick={() => setIsEditingBudget(true)} className="text-orange-600 hover:text-orange-700 font-semibold text-sm">
+                <button 
+                  onClick={() => { 
+                    setTempMaxBudget(''); 
+                    setIsEditingBudget(true); 
+                  }} 
+                  className="text-orange-600 hover:text-orange-700 font-semibold text-sm"
+                >
                   ✏️ Edit
                 </button>
               </div>
@@ -951,6 +1175,8 @@ const handleForgotPassword = async (email) => {
    const ResetPasswordScreen = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // NEW
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // NEW
 
   const handleSubmit = () => {
     if (!newPassword || newPassword.length < 6) {
@@ -979,26 +1205,46 @@ const handleForgotPassword = async (email) => {
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             New Password
           </label>
-          <input
-            type="password"
-            placeholder="Enter new password (min 6 characters)"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-          />
+          {/* NEW: Password with visibility toggle */}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter new password (min 6 characters)"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? <span className="text-xl">👁️</span> : <span className="text-xl">🙈</span>}
+            </button>
+          </div>
         </div>
         
         <div className="mb-6">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Confirm Password
           </label>
-          <input
-            type="password"
-            placeholder="Re-enter your password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-          />
+          {/* NEW: Confirm password with visibility toggle */}
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Re-enter your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showConfirmPassword ? <span className="text-xl">👁️</span> : <span className="text-xl">🙈</span>}
+            </button>
+          </div>
         </div>
         
         <button
@@ -1332,54 +1578,51 @@ const removeFriend = async (friendId) => {
 };
 
 const sendFriendRequest = async (targetUser) => {
-  // 1. Prevent sending a request to yourself
   if (targetUser.id === user.id) {
     alert("You cannot add yourself as a friend.");
     return;
   }
 
   try {
-    // 2. Check if a request already exists between these two users
-    const { data: existingRequest, error: checkError } = await supabase
-      .from('friend_requests')
-      .select('id, status')
-      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id})`);
+    // 1. Check for existing requests
+    const checkQuery = `?or=(and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id}))&select=id,status`;
+    const existingRequest = await supabaseFetch('friend_requests', checkQuery);
 
     if (existingRequest && existingRequest.length > 0) {
-      const status = existingRequest[0].status;
-      alert(`A friend request is already ${status}.`);
+      alert(`A friend request is already ${existingRequest[0].status}.`);
       return;
     }
 
-    // 3. Insert the new request into Supabase
-    const { error } = await supabase
-      .from('friend_requests')
-      .insert([
-        {
-          sender_id: user.id,
-          receiver_id: targetUser.id,
-          status: 'pending',
-          created_at: new Date().toISOString()
-        }
-      ]);
+    // 2. Insert ONLY into friend_requests (NOT friendships yet!)
+    const payload = {
+      sender_id: user.id,
+      receiver_id: targetUser.id,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
 
-    if (error) throw error;
+    console.log("Sending friend request:", payload);
+    const result = await supabaseFetch('friend_requests', '', 'POST', payload);
 
-    // 4. Track the activity for analytics
-    trackActivity('send_friend_request', {
-      to_user_id: targetUser.id,
-      to_username: targetUser.username,
-      timestamp: new Date().toISOString()
-    });
+    if (result) {
+      // 3. Track activity
+      trackActivity('send_friend_request', {
+        to_user_id: targetUser.id,
+        to_username: targetUser.username,
+        timestamp: new Date().toISOString()
+      });
 
-    alert(`Friend request sent to @${targetUser.username}!`);
-    
-    // 5. Clear search results to refresh the UI
-    setSearchUsername('');
-    setSearchResults([]);
-    
+      // 4. Update UI
+      alert(`Friend request sent to @${targetUser.username}!`);
+      setSearchUsername('');
+      setSearchResults([]);
+      
+      console.log("✅ Friend request sent successfully!");
+    } else {
+      alert('Failed to send friend request');
+    }
   } catch (error) {
-    console.error('Error sending friend request:', error.message);
+    console.error('Error sending friend request:', error);
     alert('Failed to send request: ' + error.message);
   }
 };
@@ -1387,100 +1630,165 @@ const sendFriendRequest = async (targetUser) => {
  const handleFriendRequest = async (request, accept) => {
   try {
     if (accept) {
-      await supabase
-        .from('friendships')
-        .update({ status: 'accepted' })
-        .eq('id', request.id);
+      // 1. Update friend_requests table to 'accepted'
+      const updatePayload = { status: 'accepted' };
+      const updateResult = await supabaseFetch('friend_requests', `?id=eq.${request.id}`, 'PATCH', updatePayload);
+      
+      console.log("Friend request updated:", updateResult);
+      
+      // 2. Create friendship record (this is when we add to friendships table)
+      const friendshipPayload = {
+        sender_id: request.sender_id,
+        receiver_id: request.receiver_id,
+        status: 'accepted',
+        created_at: new Date().toISOString()
+      };
+      
+      const friendshipResult = await supabaseFetch('friendships', '', 'POST', friendshipPayload);
+      console.log("Friendship created:", friendshipResult);
+      
+      // 3. Track activity
+      trackActivity('accept_friend_request', {
+        from_user_id: request.sender_id,
+        timestamp: new Date().toISOString()
+      });
+      
     } else {
-      await supabase
-        .from('friendships')
-        .delete()
-        .eq('id', request.id);
+      // Decline: Just delete the friend request
+      await supabaseFetch('friend_requests', `?id=eq.${request.id}`, 'DELETE');
+      
+      trackActivity('decline_friend_request', {
+        from_user_id: request.sender_id,
+        timestamp: new Date().toISOString()
+      });
     }
 
-    // REFRESH EVERYTHING
-    await fetchFriends();
-    await fetchFriendRequests();
+    // 4. Refresh the friends list and requests
+    await fetchFriends(user.id);
+    await fetchFriendRequests(user.id);
     
-    alert(accept ? "Friend added!" : "Request declined");
+    alert(accept ? "Friend added! 🎉" : "Request declined");
+    
   } catch (error) {
+    console.error("Friend request error:", error);
     alert("Update failed: " + error.message);
   }
 };
 
 useEffect(() => {
-  if (user) {
-    fetchFriends();
-    fetchFriendRequests();
+  console.log("👀 useEffect triggered, user:", user?.id);
+  
+  if (user?.id) {
+    console.log("🚀 Fetching friends and requests...");
+    fetchFriends(user.id);
+    fetchFriendRequests(user.id);
   } else {
-    // Clear data if user logs out
+    console.log("⚠️ No user, clearing data");
     setFriends([]);
     setFriendRequests([]);
   }
 }, [user]);
 
-const fetchFriends = async () => {
-  try {
-    // This looks scary, but it's just a direct URL query for a "Join"
-    const query = `?status=eq.accepted&or=(sender_id.eq.${user.id},receiver_id.eq.${user.id})&select=id,sender_id,receiver_id,sender:users!sender_id(id,username,full_name),receiver:users!receiver_id(id,username,full_name)`;
-    
-    const data = await supabaseFetch('friendships', query);
-
-    const formatted = data.map(f => {
-      const friendProfile = f.sender_id === user.id ? f.receiver : f.sender;
-      return {
-        id: friendProfile.id,
-        name: friendProfile.full_name || friendProfile.username,
-        username: friendProfile.username,
-        avatar: '🥗',
-        streak: 0
-      };
-    });
-    setFriends(formatted);
-  } catch (err) {
-    console.error("Fetch Friends Error:", err.message);
+const fetchFriends = async (userId) => {
+  if (!userId) {
+    userId = user?.id;
   }
-};
-
-// Function to get pending requests sent TO you
-const fetchFriendRequests = async (userId) => {
+  
   if (!userId) return;
 
   try {
-    // 1. Get the client from the window
-    const supabaseUrl = 'YOUR_PROJECT_URL';
-    const supabaseKey = 'YOUR_ANON_KEY';
-    const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+    // Get all accepted friendships
+    const query = `?status=eq.accepted&or=(sender_id.eq.${userId},receiver_id.eq.${userId})&select=id,sender_id,receiver_id`;
+    const data = await supabaseFetch('friendships', query);
 
-    // 2. Build the query step-by-step to avoid chaining errors
-    let query = client
-      .from('friend_requests')
-      .select(`
-        id, 
-        status, 
-        sender_id, 
-        receiver_id,
-        sender:sender_id ( username, full_name )
-      `);
-
-    // Add filters one by one
-    query = query.eq('receiver_id', userId);
-    query = query.eq('status', 'pending');
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    if (data) {
-      const formatted = data.map(req => ({
-        ...req,
-        sender_name: req.sender?.full_name || 'Unknown User',
-        sender_username: req.sender?.username || 'unknown'
-      }));
-      setFriendRequests(formatted);
+    if (!data || data.length === 0) {
+      setFriends([]);
+      return;
     }
+
+    // Get friend profiles
+    const formatted = await Promise.all(
+      data.map(async (f) => {
+        const friendId = f.sender_id === userId ? f.receiver_id : f.sender_id;
+        const friendQuery = `?id=eq.${friendId}&select=id,username,full_name`;
+        const friendData = await supabaseFetch('users', friendQuery);
+        
+        if (friendData && friendData[0]) {
+          return {
+            id: friendData[0].id,
+            name: friendData[0].full_name || friendData[0].username,
+            username: friendData[0].username,
+            avatar: '🥗',
+            streak: 0
+          };
+        }
+        return null;
+      })
+    );
+
+    setFriends(formatted.filter(f => f !== null));
+  } catch (err) {
+    console.error("Fetch Friends Error:", err);
+    setFriends([]);
+  }
+};
+
+const fetchFriendRequests = async (userId) => {
+  console.log("🔍 fetchFriendRequests called with userId:", userId);
+  
+  if (!userId) {
+    console.log("❌ No userId provided");
+    return;
+  }
+
+  try {
+    // Build the URL manually for debugging
+    const query = `?receiver_id=eq.${userId}&status=eq.pending&select=*`;
+    const url = `${supabaseUrl}/rest/v1/friend_requests${query}`;
+    
+    console.log("📡 Fetching from:", url);
+    
+    const response = await fetch(url, {
+      headers: {
+        'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+    console.log("📦 Raw friend_requests data:", data);
+
+    if (!data || data.length === 0) {
+      console.log("⚠️ No pending requests found");
+      setFriendRequests([]);
+      return;
+    }
+
+    // Get sender details for each request
+    const formatted = await Promise.all(
+      data.map(async (req) => {
+        console.log("👤 Fetching sender details for:", req.sender_id);
+        
+        const senderQuery = `?id=eq.${req.sender_id}&select=id,username,full_name`;
+        const senderData = await supabaseFetch('users', senderQuery);
+        
+        console.log("👤 Sender data:", senderData);
+        
+        return {
+          ...req,
+          sender_name: senderData?.[0]?.full_name || 'Unknown User',
+          sender_username: senderData?.[0]?.username || 'unknown'
+        };
+      })
+    );
+
+    console.log("✅ Formatted friend requests:", formatted);
+    setFriendRequests(formatted);
+    
   } catch (error) {
-    console.error('Error fetching requests:', error.message);
+    console.error('❌ Error fetching requests:', error);
+    setFriendRequests([]);
   }
 };
 
@@ -1513,55 +1821,84 @@ const fetchFriendRequests = async (userId) => {
     alert("Error sending feedback: " + error.message);
   }
 };
+const sendMealToFriends = async () => {
+  if (!selectedMeal || selectedFriendsForMeal.length === 0) {
+    alert("Please select a meal and at least one friend");
+    return;
+  }
 
-   const sendMealToFriends = async () => {
   try {
-    // This creates a record for each selected friend
-    const mealPromises = selectedFriendsForMeal.map(friendId => {
-      const body = {
+    // Create activity records for each friend
+    const mealPromises = selectedFriendsForMeal.map(async (friendId) => {
+      const payload = {
+        user_id: user.id,
+        user_email: user.email,
         sender_id: user.id,
         receiver_id: friendId,
         action_type: 'share_meal',
-        action_details: { meal_name: selectedMeal.name, budget: selectedMeal.budget }
+        action_details: { 
+          meal_name: selectedMeal.name, 
+          budget: selectedMeal.budget,
+          meal_id: selectedMeal.id,
+          category: selectedMeal.category
+        },
+        created_at: new Date().toISOString()
       };
-      return supabaseFetch('user_activity', '', 'POST', body);
+      
+      console.log("📤 Sharing meal:", payload);
+      return await supabaseFetch('user_activity', '', 'POST', payload);
     });
 
-    await Promise.all(mealPromises);
-    alert(`Meal shared with ${selectedFriendsForMeal.length} friends!`);
-    setCurrentScreen('suggestions');
+    const results = await Promise.all(mealPromises);
+    console.log("✅ Meals shared:", results);
+
+    alert(`🎉 ${selectedMeal.name} shared with ${selectedFriendsForMeal.length} friend(s)!`);
+    
+    // Track the activity
+    trackActivity('share_meals_bulk', {
+      meal_name: selectedMeal.name,
+      friends_count: selectedFriendsForMeal.length,
+      timestamp: new Date().toISOString()
+    });
+
+    // Reset and go back
     setSelectedFriendsForMeal([]);
+    setCurrentScreen('suggestions');
+    
   } catch (err) {
-    alert("Failed to share meal.");
+    console.error("Error sharing meals:", err);
+    alert("Failed to share meal. Please try again.");
   }
 };
 
   const trackActivity = async (action, details = {}) => {
-  if (!user?.id) {
-    console.log("No user ID, skipping activity track");
+  // Don't track if no user
+  if (!user?.id || !user?.email) {
+    console.log("⚠️ No user logged in, skipping activity track");
     return;
   }
   
   try {
     const payload = {
       user_id: user.id,
-      user_email: user.email, // ADD THIS LINE
+      user_email: user.email,
       action_type: action,
       action_details: details,
       created_at: new Date().toISOString()
     };
     
-    console.log("Tracking activity:", payload);
+    console.log("📊 Tracking activity for:", user.email, "Action:", action);
+    console.log("Payload:", payload);
     
     const result = await supabaseFetch('user_activity', '', 'POST', payload);
     
     if (result) {
-      console.log("Activity tracked successfully:", result);
+      console.log("✅ Activity tracked successfully!");
     } else {
-      console.error("Failed to track activity");
+      console.error("❌ Activity tracking returned null");
     }
   } catch (error) {
-    console.error("Activity tracking error:", error);
+    console.error("❌ Activity tracking error:", error);
   }
 };
 
@@ -1613,6 +1950,7 @@ const fetchFriendRequests = async (userId) => {
     username: ''
   });
   const [isRegistering, setIsRegistering] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // NEW: Track visibility
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -1671,15 +2009,28 @@ const fetchFriendRequests = async (userId) => {
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Password
           </label>
-          <input
-            type="password"
-            placeholder="Enter your password"
-            value={formData.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-          />
+          {/* NEW: Password input with eye icon */}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              value={formData.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? (
+                <span className="text-xl">👁️</span>
+              ) : (
+                <span className="text-xl">🙈</span>
+              )}
+            </button>
+          </div>
           
-          {/* FORGOT PASSWORD LINK - Only shows on Login mode */}
           {!isRegistering && (
             <div className="flex justify-end mt-2">
               <button
@@ -1910,7 +2261,7 @@ const fetchFriendRequests = async (userId) => {
             )}
             
 {currentScreen === 'streaks' && (
-  <StreaksScreen friends={friends} />
+  <StreaksScreen friends={friends} user={user} />
 )}
 
 {/* SHARE */}
