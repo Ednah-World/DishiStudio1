@@ -408,7 +408,8 @@ const StreaksScreen = ({ friends, user }) => {
           receivedCount: receivedFromFriend.length,
           avgPrice,
           recentMeals,
-          totalShared: allMeals.length
+          totalShared: allMeals.length,
+          lastActivity: allMeals.length > 0 ? new Date(allMeals[0].created_at).getTime() : 0
         };
       });
 
@@ -496,79 +497,9 @@ const StreaksScreen = ({ friends, user }) => {
               <div className="space-y-4">
                 <h3 className="text-xl font-bold text-gray-800">Leaderboard</h3>
                 {streakData
-                  .sort((a, b) => (b.streak || 0) - (a.streak || 0))
-                  .map((friend, index) => (
-                    <div key={friend.id} className="bg-white rounded-xl shadow-lg p-6">
-                      {/* Header */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl font-bold text-gray-400">#{index + 1}</span>
-                          <span className="text-3xl">{friend.avatar || '🥗'}</span>
-                          <div>
-                            <span className="font-bold text-lg text-gray-800">{friend.name}</span>
-                            <p className="text-xs text-gray-500">@{friend.username}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Flame className="w-6 h-6 text-orange-500" />
-                          <span className="text-2xl font-bold text-orange-600">{friend.streak || 0}</span>
-                        </div>
-                      </div>
-
-                      {/* Stats */}
-                      <div className="grid grid-cols-3 gap-3 mb-4">
-                        <div className="bg-blue-50 rounded-lg p-3 text-center">
-                          <p className="text-xs text-gray-600">Meals Sent</p>
-                          <p className="text-xl font-bold text-blue-600">{friend.sentCount}</p>
-                        </div>
-                        <div className="bg-green-50 rounded-lg p-3 text-center">
-                          <p className="text-xs text-gray-600">Meals Received</p>
-                          <p className="text-xl font-bold text-green-600">{friend.receivedCount}</p>
-                        </div>
-                        <div className="bg-purple-50 rounded-lg p-3 text-center">
-                          <p className="text-xs text-gray-600">Avg Price</p>
-                          <p className="text-xl font-bold text-purple-600">KSh {friend.avgPrice}</p>
-                        </div>
-                      </div>
-
-                      {/* Recent Meals */}
-                      {friend.recentMeals && friend.recentMeals.length > 0 && (
-                        <div className="border-t pt-4">
-                          <p className="text-sm font-bold text-gray-700 mb-2">Recent Meals Shared:</p>
-                          <div className="space-y-2">
-                            {friend.recentMeals.map((meal, idx) => (
-                              <div key={idx} className="flex justify-between items-center text-sm bg-gray-50 rounded-lg p-2">
-                                <div>
-                                  <span className="font-semibold text-gray-800">{meal.name}</span>
-                                  <span className="text-gray-500 text-xs ml-2">by {meal.sender}</span>
-                                </div>
-                                <div className="text-right">
-                                  <p className="font-semibold text-green-600">KSh {meal.price}</p>
-                                  <p className="text-xs text-gray-500">{meal.date}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Streak Info */}
-                      {friend.streak > 0 && (
-                        <div className="mt-4 bg-orange-50 border-l-4 border-orange-500 rounded p-3">
-                          <p className="text-sm text-orange-800">
-                            🔥 <strong>{friend.streak} day streak!</strong> Keep sharing meals daily to maintain it.
-                          </p>
-                        </div>
-                      )}
-
-                      {friend.totalShared === 0 && (
-                        <div className="mt-4 bg-gray-50 rounded p-3 text-center">
-                          <p className="text-sm text-gray-600">
-                            No meals shared yet. Send a meal to start your streak!
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                  .sort((a, b) => b.lastActivity - a.lastActivity)
+                  .map((friend) => (
+                    <StreakItem key={friend.id} friend={friend} />
                   ))}
               </div>
             )}
@@ -578,6 +509,95 @@ const StreaksScreen = ({ friends, user }) => {
     </div>
   );
 };
+
+const StreakItem = ({ friend }) => {
+  const [showDetails, setShowDetails] = useState(false);
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">{friend.avatar || '🥗'}</span>
+          <div>
+            <span className="font-bold text-lg text-gray-800">{friend.name}</span>
+            <p className="text-xs text-gray-500">@{friend.username}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Flame className="w-6 h-6 text-orange-500" />
+          <span className="text-2xl font-bold text-orange-600">{friend.streak || 0}</span>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="bg-blue-50 rounded-lg p-3 text-center">
+          <p className="text-xs text-gray-600">Sent</p>
+          <p className="text-xl font-bold text-blue-600">{friend.sentCount}</p>
+        </div>
+        <div className="bg-green-50 rounded-lg p-3 text-center">
+          <p className="text-xs text-gray-600">Received</p>
+          <p className="text-xl font-bold text-green-600">{friend.receivedCount}</p>
+        </div>
+        <div className="bg-purple-50 rounded-lg p-3 text-center">
+          <p className="text-xs text-gray-600">Avg</p>
+          <p className="text-xl font-bold text-purple-600">KSh {friend.avgPrice}</p>
+        </div>
+      </div>
+
+      {/* Toggle Button for Details */}
+      {friend.recentMeals && friend.recentMeals.length > 0 && (
+        <button
+          onClick={() => setShowDetails(!showDetails)}
+          className="w-full py-2 text-sm font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center gap-2"
+        >
+          {showDetails ? 'Hide Activity' : 'View Recent Shared Meals'}
+          <span className={`transform transition-transform ${showDetails ? 'rotate-180' : ''}`}>▼</span>
+        </button>
+      )}
+
+      {/* Recent Meals (Collapsible) */}
+      {showDetails && friend.recentMeals && friend.recentMeals.length > 0 && (
+        <div className="mt-4 border-t pt-4 animate-fade-in">
+          <p className="text-sm font-bold text-gray-700 mb-2">Recent Meals Shared:</p>
+          <div className="space-y-2">
+            {friend.recentMeals.map((meal, idx) => (
+              <div key={idx} className="flex justify-between items-center text-sm bg-gray-50 rounded-lg p-2">
+                <div>
+                  <span className="font-semibold text-gray-800">{meal.name}</span>
+                  <span className="text-gray-500 text-xs ml-2">by {meal.sender}</span>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-green-600">KSh {meal.price}</p>
+                  <p className="text-xs text-gray-500">{meal.date}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Streak Info */}
+      {friend.streak > 0 && (
+        <div className="mt-4 bg-orange-50 border-l-4 border-orange-500 rounded p-3">
+          <p className="text-sm text-orange-800">
+            🔥 <strong>{friend.streak} day streak!</strong> Keep sharing meals daily.
+          </p>
+        </div>
+      )}
+
+      {friend.totalShared === 0 && (
+        <div className="mt-4 bg-gray-50 rounded p-3 text-center">
+          <p className="text-sm text-gray-600">
+            No meals shared yet. Send a meal to start!
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 const ShareScreen = ({
   selectedMeal,
