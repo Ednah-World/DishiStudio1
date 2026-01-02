@@ -33,6 +33,119 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 // This connects your old function calls to our new fetcher
 const sendToSupabase = supabaseFetch;
 
+const TERMS_OF_SERVICE = `Terms of Service (DishiStudio MVP)
+Last updated: 1st January, 2026
+
+1. Acceptance of Terms
+By accessing or using DishiStudio, you agree to be bound by these Terms of Service. If you do not agree, do not use the App.
+
+2. Description of the Service
+DishiStudio is a social food and wellness application that allows users to:
+• Log meals
+• Share meals with friends
+• Build and maintain daily streaks based on shared meals
+• View leaderboards and activity history
+
+The App is currently offered as a Minimum Viable Product (MVP). Features may change, break, or be removed at any time.
+
+3. Eligibility
+You must be at least 13 years old to use the App. By creating an account, you confirm that you meet this requirement.
+
+4. Accounts and Authentication
+• You are responsible for all activity under your account
+• You must provide accurate account information
+• You agree not to share access credentials
+
+We reserve the right to suspend accounts engaged in abuse, cheating, or manipulation of streaks or social features.
+
+5. Meal Sharing and Streaks
+• Streaks are calculated automatically based on shared meal activity
+• Streaks may reset if no qualifying activity occurs within a given day
+• Streak values are informational and have no monetary value
+
+We do not guarantee the accuracy, continuity, or permanence of streak data during the MVP phase.
+
+6. No Medical or Health Advice Disclaimer
+DishiStudio does not provide medical, nutritional, dietary, or health advice.
+• All content related to meals, streaks, or wellness features is provided for informational and social purposes only
+• The App is not a substitute for professional medical advice, diagnosis, or treatment
+• You should always seek the advice of a qualified healthcare provider with any questions regarding health or dietary conditions
+
+Use of the App does not create a doctor-patient or professional relationship of any kind.
+
+7. User Content
+You retain ownership of content you submit (e.g., meal names, descriptions, images).
+By submitting content, you grant DishiStudio a non-exclusive, royalty-free license to store, display, and process this content solely for operating and improving the App.
+
+8. Acceptable Use
+You agree not to:
+• Attempt to exploit, reverse-engineer, or disrupt the App
+• Manipulate streaks or activity data dishonestly
+• Harass or abuse other users
+• Use the App for unlawful purposes
+
+9. MVP Disclaimer
+The App is provided "as is" and "as available". As an MVP:
+• Downtime may occur
+• Features may behave unexpectedly
+• Data loss is possible
+
+You use the App at your own risk.
+
+10. Limitation of Liability
+To the fullest extent permitted by law, DishiStudio shall not be liable for indirect, incidental, or consequential damages arising from your use of the App.
+
+11. Termination
+We may suspend or terminate your account at any time for violation of these Terms or to protect the integrity of the platform.
+
+12. Changes to These Terms
+We may update these Terms periodically. Continued use of the App constitutes acceptance of the revised Terms.
+
+13. Contact
+For questions, contact: ednahmageria539@gmail.com`;
+
+const PRIVACY_POLICY = `Privacy Policy (DishiStudio MVP)
+Last updated: 1st January, 2026
+
+1. Information We Collect
+We collect only what is necessary to operate the App:
+• Account information (email, username)
+• Meal data you log or share
+• Social interaction data (friends, streaks, shared meals)
+• Usage metadata (timestamps, actions)
+
+2. How We Use Your Information
+Your data is used to:
+• Provide meal logging and sharing features
+• Calculate streaks and leaderboards
+• Enable social interactions
+• Improve reliability, security, and performance
+
+3. Data Storage and Processing
+Data is stored using third-party infrastructure providers (e.g., hosting and database services). We take reasonable measures to protect your data.
+
+4. Data Sharing
+We do not sell personal data.
+Data is shared only:
+• With other users, as required by social features (e.g., shared meals, streaks)
+• With infrastructure providers strictly necessary to operate the App
+• When required by law
+
+5. Data Retention
+We retain your data while your account is active. You may request account deletion, after which associated personal data will be removed within a reasonable period.
+
+6. Your Rights
+Depending on your jurisdiction, you may have rights to access, correct, or delete your personal data.
+
+7. Children's Privacy
+The App is not intended for children under 13. We do not knowingly collect data from children.
+
+8. Changes to This Policy
+We may update this Privacy Policy as the App evolves. Updates will be posted in the App.
+
+9. Contact
+For privacy questions, contact: ednahmageria539@gmail.com`;
+
 const HomeScreen = ({ setCurrentScreen }) => (
   <div className="min-h-screen bg-gradient-to-b from-orange-100 to-pink-100 flex items-center justify-center p-4 pb-24">
     <div className="text-center relative z-10">
@@ -641,15 +754,15 @@ const BudgetScreen = ({ budget, setBudget, trackActivity }) => {
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-center">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-gray-600 text-sm">Daily Average</p>
-              <p className="text-2xl font-bold text-blue-600">KSh {Math.round(budget / 7)}</p>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <p className="text-gray-600 text-sm">Per Meal</p>
-              <p className="text-2xl font-bold text-purple-600">KSh {Math.round(budget / 21)}</p>
-            </div>
-          </div>
+  <div className="bg-blue-50 p-4 rounded-lg">
+    <p className="text-gray-600 text-sm">Daily Average</p>
+    <p className="text-2xl font-bold text-blue-600">KSh {isNaN(budget) ? 0 : Math.round(Number(budget) / 7)}</p>
+  </div>
+  <div className="bg-purple-50 p-4 rounded-lg">
+    <p className="text-gray-600 text-sm">Per Meal</p>
+    <p className="text-2xl font-bold text-purple-600">KSh {isNaN(budget) ? 0 : Math.round(Number(budget) / 21)}</p>
+  </div>
+</div>
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-6">
@@ -911,6 +1024,114 @@ const FeedbackScreen = ({ submitFeedback, trackActivity }) => {
   );
 };
 
+const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, setTermsText, TERMS_OF_SERVICE, PRIVACY_POLICY }) => {
+  const [showDeleteSection, setShowDeleteSection] = useState(false);
+
+  return (
+    <div className="pb-20">
+      <div className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-6">
+        <h2 className="text-3xl font-bold mb-2 text-white">Profile & Settings</h2>
+        <p className="opacity-90">Manage your account</p>
+      </div>
+      
+      <div className="p-4 max-w-4xl mx-auto space-y-4">
+        {/* User Info */}
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-purple-50">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Account Information</h3>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-gray-600">Name</p>
+              <p className="text-lg font-semibold text-gray-800">{user?.name}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Username</p>
+              <p className="text-lg font-semibold text-gray-800">@{user?.username}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Email</p>
+              <p className="text-lg font-semibold text-gray-800">{user?.email}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Terms & Privacy */}
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Legal</h3>
+          <div className="space-y-2">
+            <button
+              onClick={() => {
+                setTermsText(TERMS_OF_SERVICE);
+                setShowTermsModal(true);
+              }}
+              className="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all"
+            >
+              <p className="font-semibold text-gray-800">Terms of Service</p>
+              <p className="text-sm text-gray-600">View our terms and conditions</p>
+            </button>
+            <button
+              onClick={() => {
+                setTermsText(PRIVACY_POLICY);
+                setShowTermsModal(true);
+              }}
+              className="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all"
+            >
+              <p className="font-semibold text-gray-800">Privacy Policy</p>
+              <p className="text-sm text-gray-600">How we handle your data</p>
+            </button>
+          </div>
+        </div>
+
+        {/* Danger Zone */}
+        <div className="bg-red-50 rounded-xl shadow-lg p-6 border-2 border-red-200">
+          <h3 className="text-xl font-bold text-red-800 mb-2">Danger Zone</h3>
+          <p className="text-sm text-red-600 mb-4">These actions cannot be undone</p>
+          
+          {!showDeleteSection ? (
+            <button
+              onClick={() => setShowDeleteSection(true)}
+              className="bg-red-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-600 transition-all"
+            >
+              Delete Account
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <div className="bg-white p-4 rounded-lg border-2 border-red-300">
+                <p className="text-sm text-gray-800 mb-2">
+                  <strong>⚠️ Warning:</strong> Deleting your account will:
+                </p>
+                <ul className="text-sm text-gray-700 space-y-1 ml-4 list-disc">
+                  <li>Permanently delete all your data</li>
+                  <li>Remove all friend connections</li>
+                  <li>Erase all streak history</li>
+                  <li>Delete all meal records</li>
+                </ul>
+                <p className="text-sm text-red-600 font-bold mt-3">
+                  This action CANNOT be reversed!
+                </p>
+              </div>
+              
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDeleteAccount}
+                  className="flex-1 bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition-all"
+                >
+                  Yes, Delete My Account
+                </button>
+                <button
+                  onClick={() => setShowDeleteSection(false)}
+                  className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const MealPlannerApp = () => {
   const [currentScreen, setCurrentScreen] = useState('home');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -1053,6 +1274,12 @@ useEffect(() => {
   const [searchUsername, setSearchUsername] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedFriendsForMeal, setSelectedFriendsForMeal] = useState([]);
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
+const [showTermsModal, setShowTermsModal] = useState(false);
+const [termsText, setTermsText] = useState('');
+const [policyText, setPolicyText] = useState('');
+const [checkingTerms, setCheckingTerms] = useState(false);
+
    React.useEffect(() => {
     localStorage.setItem('friendRequests', JSON.stringify(friendRequests));
   }, [friendRequests]);
@@ -1130,7 +1357,7 @@ const handleForgotPassword = async (email) => {
 
    const handleUpdatePassword = async (newPassword) => {
   if (!newPassword || newPassword.length < 6) {
-    alert("Password must be at least 6 characters");
+    alert("Password must be at least 15 characters");
     return;
   }
 
@@ -1169,6 +1396,159 @@ const handleForgotPassword = async (email) => {
     
   } catch (err) {
     alert("Error: " + err.message);
+  }
+};
+
+const handleDeleteAccount = async () => {
+  if (!user?.id) {
+    alert("No user logged in");
+    return;
+  }
+
+  const confirmDelete = window.confirm(
+    "⚠️ WARNING: This will permanently delete your account and all data.\n\n" +
+    "This includes:\n" +
+    "• Your profile\n" +
+    "• All meal history\n" +
+    "• Friend connections\n" +
+    "• Streak data\n\n" +
+    "This action CANNOT be undone.\n\n" +
+    "Type 'DELETE' in the next prompt to confirm."
+  );
+
+  if (!confirmDelete) return;
+
+  const confirmText = window.prompt("Type DELETE to confirm account deletion:");
+  
+  if (confirmText !== "DELETE") {
+    alert("Account deletion cancelled");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    // 1. Record deletion in Supabase
+    await supabaseFetch('account_deletions', '', 'POST', {
+      user_id: user.id,
+      user_email: user.email,
+      username: user.username,
+      deleted_at: new Date().toISOString(),
+      reason: 'user_requested'
+    });
+
+    // 2. Delete user data from users table
+    await supabaseFetch('users', `?id=eq.${user.id}`, 'DELETE');
+
+    // 3. Delete from Supabase Auth
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.substring(1));
+    const accessToken = params.get('access_token') || localStorage.getItem('supabase.auth.token');
+    
+    if (accessToken) {
+      await fetch(`${supabaseUrl}/auth/v1/user`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+    }
+
+    // 4. Clear local storage
+    localStorage.removeItem('dishiUser');
+    localStorage.removeItem('friends');
+    localStorage.removeItem('friendRequests');
+
+    // 5. Reset app state
+    setUser(null);
+    setIsLoggedIn(false);
+    setFriends([]);
+    setFriendRequests([]);
+    
+    alert("Your account has been permanently deleted. We're sorry to see you go!");
+    setCurrentScreen('home');
+
+  } catch (error) {
+    console.error("Delete account error:", error);
+    alert("Failed to delete account: " + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const checkTermsAcceptance = async (userId) => {
+  if (!userId) return;
+  
+  setCheckingTerms(true);
+  try {
+    const query = `?id=eq.${userId}&select=terms_accepted,terms_accepted_at`;
+    const data = await supabaseFetch('users', query);
+    
+    console.log("📋 Terms acceptance check:", data);
+    
+    if (data && data[0]) {
+      const accepted = data[0].terms_accepted || false;
+      setHasAcceptedTerms(accepted);
+      
+      // Show modal if not accepted
+      if (!accepted) {
+        console.log("⚠️ Terms not accepted, showing modal");
+        setShowTermsModal(true);
+      } else {
+        console.log("✅ Terms already accepted on:", data[0].terms_accepted_at);
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error checking terms:", error);
+    // On error, assume not accepted for safety
+    setHasAcceptedTerms(false);
+    setShowTermsModal(true);
+  } finally {
+    setCheckingTerms(false);
+  }
+};
+
+const handleAcceptTerms = async () => {
+  if (!user?.id) return;
+
+  try {
+    console.log("✍️ Recording terms acceptance for user:", user.id);
+
+    // 1. Record in audit table
+    const acceptanceRecord = await supabaseFetch('terms_acceptances', '', 'POST', {
+      user_id: user.id,
+      user_email: user.email,
+      accepted_at: new Date().toISOString(),
+      terms_version: '1.0',
+      ip_address: 'client_side'
+    });
+
+    console.log("📝 Acceptance recorded:", acceptanceRecord);
+
+    // 2. Update user record
+    const userUpdate = await supabaseFetch('users', `?id=eq.${user.id}`, 'PATCH', {
+      terms_accepted: true,
+      terms_accepted_at: new Date().toISOString()
+    });
+
+    console.log("👤 User updated:", userUpdate);
+
+    // 3. Update state
+    setHasAcceptedTerms(true);
+    setShowTermsModal(false);
+    
+    // 4. Track the activity
+    trackActivity('accept_terms', {
+      terms_version: '1.0',
+      timestamp: new Date().toISOString()
+    });
+
+    alert("Thank you for accepting our Terms and Privacy Policy! 🎉");
+
+  } catch (error) {
+    console.error("❌ Error recording terms acceptance:", error);
+    alert("Failed to record acceptance. Please try again.");
   }
 };
 
@@ -1287,6 +1667,34 @@ const { data: profile, error: profileError } = await client
   .eq('id', data.user.id)
   .single();
 
+  if (data?.user) {
+  const { data: profile, error: profileError } = await client
+    .from('users') 
+    .select('*')
+    .eq('id', data.user.id)
+    .single();
+
+  if (profileError) console.error("Profile error:", profileError);
+
+  const userData = {
+    id: data.user.id,
+    email: data.user.email,
+    username: profile?.username || data.user.email, 
+    name: profile?.full_name || 'Dishi Member'
+  };
+
+  localStorage.setItem('dishiUser', JSON.stringify(userData));
+  setUser(userData);
+  setIsLoggedIn(true);
+  setCurrentScreen('suggestions');
+
+  // Check if user has accepted terms
+  await checkTermsAcceptance(data.user.id);
+
+  await fetchFriendRequests(data.user.id);
+  await fetchFriends(data.user.id);
+}
+
 if (profileError) console.error("Profile error:", profileError);
 
 const userData = {
@@ -1311,6 +1719,8 @@ const userData = {
       // (Bypasses the delay of waiting for the 'user' state to refresh)
       await fetchFriendRequests(data.user.id);
       await fetchFriends(data.user.id);
+      // ✅ CHECK TERMS ACCEPTANCE AFTER LOGIN
+      await checkTermsAcceptance(data.user.id);
     }
   } catch (error) {
     console.error("Login detail error:", error);
@@ -1395,7 +1805,8 @@ const renderContent = () => {
         username: username,
         full_name: name,
         created_at: new Date().toISOString(),
-        streak: 0
+        streak: 0,
+        terms_accepted: false
       });
     }
 
@@ -1903,45 +2314,48 @@ const sendMealToFriends = async () => {
 };
 
   const NavBar = () => (
-    <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-4 shadow-lg">
-      <div className="flex justify-between items-center max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold">🍽️ DishiStudio</h1>
-        {isLoggedIn && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm">{user?.name}</span>
-          </div>
-        )}
-      </div>
+  <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-4 shadow-lg">
+    <div className="flex justify-between items-center max-w-6xl mx-auto">
+      <h1 className="text-2xl font-bold">🍽️ DishiStudio</h1>
+      {isLoggedIn && (
+        <button 
+          onClick={() => setCurrentScreen('profile')}
+          className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-2 rounded-lg transition-all"
+        >
+          <span className="text-sm font-semibold">{user?.name}</span>
+          <span className="text-lg">⚙️</span>
+        </button>
+      )}
     </div>
-  );
+  </div>
+);
 
   const BottomNav = () => (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-      <div className="flex justify-around items-center max-w-6xl mx-auto">
-        <button onClick={() => { setCurrentScreen('suggestions'); trackActivity('navigate', { screen: 'suggestions' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
-          <Home className="w-6 h-6" />
-          <span className="text-xs mt-1">Home</span>
-        </button>
-        <button onClick={() => { setCurrentScreen('budget'); trackActivity('navigate', { screen: 'budget' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
-          <DollarSign className="w-6 h-6" />
-          <span className="text-xs mt-1">Budget</span>
-        </button>
-        <button onClick={() => { setCurrentScreen('friends'); trackActivity('navigate', { screen: 'friends' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
-          <Users className="w-6 h-6" />
-          <span className="text-xs mt-1">Friends</span>
-        </button>
-        <button onClick={() => { setCurrentScreen('streaks'); trackActivity('navigate', { screen: 'streaks' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
-          <Flame className="w-6 h-6" />
-          <span className="text-xs mt-1">Streaks</span>
-        </button>
-        <button onClick={() => { setCurrentScreen('feedback'); trackActivity('navigate', { screen: 'feedback' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
-          <MessageSquare className="w-6 h-6" />
-          <span className="text-xs mt-1">Feedback</span>
-        </button>
-      </div>
+  <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+    <div className="flex justify-around items-center max-w-6xl mx-auto">
+      <button onClick={() => { setCurrentScreen('suggestions'); trackActivity('navigate', { screen: 'suggestions' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
+        <Home className="w-6 h-6" />
+        <span className="text-xs mt-1">Home</span>
+      </button>
+      <button onClick={() => { setCurrentScreen('budget'); trackActivity('navigate', { screen: 'budget' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
+        <DollarSign className="w-6 h-6" />
+        <span className="text-xs mt-1">Budget</span>
+      </button>
+      <button onClick={() => { setCurrentScreen('friends'); trackActivity('navigate', { screen: 'friends' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
+        <Users className="w-6 h-6" />
+        <span className="text-xs mt-1">Friends</span>
+      </button>
+      <button onClick={() => { setCurrentScreen('streaks'); trackActivity('navigate', { screen: 'streaks' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
+        <Flame className="w-6 h-6" />
+        <span className="text-xs mt-1">Streaks</span>
+      </button>
+      <button onClick={() => { setCurrentScreen('feedback'); trackActivity('navigate', { screen: 'feedback' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
+        <MessageSquare className="w-6 h-6" />
+        <span className="text-xs mt-1">Feedback</span>
+      </button>
     </div>
-  );
-
+  </div>
+);
   const LoginScreen = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -2193,6 +2607,70 @@ const sendMealToFriends = async () => {
     );
   };
 
+  const TermsModal = () => {
+  const [viewingPolicy, setViewingPolicy] = useState(false);
+
+  if (!showTermsModal) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-6">
+          <h2 className="text-2xl font-bold mb-2">
+            {viewingPolicy ? 'Privacy Policy' : 'Terms of Service'}
+          </h2>
+          <p className="text-sm opacity-90">Please read and accept to continue using DishiStudio</p>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="prose prose-sm max-w-none">
+            <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 leading-relaxed">
+              {viewingPolicy ? PRIVACY_POLICY : TERMS_OF_SERVICE}
+            </pre>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t p-6 bg-gray-50">
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setViewingPolicy(!viewingPolicy)}
+              className="text-sm text-orange-600 hover:text-orange-700 font-semibold"
+            >
+              {viewingPolicy ? '← Back to Terms of Service' : 'View Privacy Policy →'}
+            </button>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleAcceptTerms}
+                className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-lg font-bold hover:shadow-lg transition-all"
+              >
+                ✓ I Accept Terms & Privacy Policy
+              </button>
+              <button
+                onClick={() => {
+                  if (window.confirm("You must accept the Terms to use DishiStudio. Decline will log you out.")) {
+                    setIsLoggedIn(false);
+                    setUser(null);
+                    setShowTermsModal(false);
+                    setCurrentScreen('home');
+                    localStorage.removeItem('dishiUser');
+                  }
+                }}
+                className="px-6 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition-all"
+              >
+                Decline
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* 1. AUTHENTICATION SCREENS (Before Login) */}
@@ -2281,6 +2759,16 @@ const sendMealToFriends = async () => {
     trackActivity={trackActivity} 
   />
 )}
+{currentScreen === 'profile' && (
+  <ProfileScreen 
+    user={user}
+    handleDeleteAccount={handleDeleteAccount}
+    setShowTermsModal={setShowTermsModal}
+    setTermsText={setTermsText}
+    TERMS_OF_SERVICE={TERMS_OF_SERVICE}
+    PRIVACY_POLICY={PRIVACY_POLICY}
+  />
+)}
           </main>
 
           <BottomNav currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} />
@@ -2288,6 +2776,16 @@ const sendMealToFriends = async () => {
             viewingRecipe={viewingRecipe} 
             setViewingRecipe={setViewingRecipe} 
           />
+          {isLoggedIn && (
+      <TermsModal 
+        isOpen={showTermsModal}
+        onAccept={handleAcceptTerms}
+        onClose={() => {
+          alert("You must accept Terms & Privacy Policy to use DishiStudio");
+          setShowTermsModal(true); // Keep it open
+        }}
+      />
+    )}
         </>
       )}
     </div>
