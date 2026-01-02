@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Home, Users, DollarSign, Flame, MessageSquare, Share2, TrendingUp, X } from 'lucide-react';
-import { useEffect, useRef } from 'react';  
+import { useEffect, useRef } from 'react';
 
 // Supabase Configuration
 const supabaseUrl = 'https://ltrdgyraevtxwroukxkt.supabase.co';
-const  supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cmRneXJhZXZ0eHdyb3VreGt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyODA5MDEsImV4cCI6MjA4MTg1NjkwMX0.hERWWr2FjKX9zJJVU3j8JjE2y1ZKJeQCsHyrm1yueEI';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cmRneXJhZXZ0eHdyb3VreGt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyODA5MDEsImV4cCI6MjA4MTg1NjkwMX0.hERWWr2FjKX9zJJVU3j8JjE2y1ZKJeQCsHyrm1yueEI';
 
 const supabaseFetch = async (tableName, query = '', method = 'GET', body = null) => {
   try {
@@ -281,9 +281,9 @@ const FriendsScreen = ({
                         const isAlreadyFriend = friends.some(f => f.id === u.id);
                         const hasPendingRequest = friendRequests.some(
                           req => (req.sender_id === user?.id && req.receiver_id === u.id) ||
-                                 (req.sender_id === u.id && req.receiver_id === user?.id)
+                            (req.sender_id === u.id && req.receiver_id === user?.id)
                         );
-                        
+
                         return (
                           <div key={u.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                             <div>
@@ -293,15 +293,14 @@ const FriendsScreen = ({
                             <button
                               onClick={() => sendFriendRequest(u)}
                               disabled={u.id === user?.id || isAlreadyFriend || hasPendingRequest}
-                              className={`px-4 py-2 rounded-lg font-semibold ${
-                                u.id === user?.id 
-                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                                  : isAlreadyFriend 
-                                  ? 'bg-green-100 text-green-700 cursor-not-allowed' 
+                              className={`px-4 py-2 rounded-lg font-semibold ${u.id === user?.id
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : isAlreadyFriend
+                                  ? 'bg-green-100 text-green-700 cursor-not-allowed'
                                   : hasPendingRequest
-                                  ? 'bg-yellow-100 text-yellow-700 cursor-not-allowed'
-                                  : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:shadow-lg'
-                              }`}
+                                    ? 'bg-yellow-100 text-yellow-700 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:shadow-lg'
+                                }`}
                             >
                               {u.id === user?.id ? 'You' : isAlreadyFriend ? '✓ Friends' : hasPendingRequest ? 'Pending' : 'Add Friend'}
                             </button>
@@ -360,13 +359,13 @@ const StreaksScreen = ({ friends, user }) => {
 
   const fetchStreakData = async () => {
     if (!user?.id) return;
-    
+
     setLoading(true);
     try {
       // Fetch all meal sharing activities involving this user
       const query = `?or=(sender_id.eq.${user.id},receiver_id.eq.${user.id})&action_type=eq.share_meal&select=*&order=created_at.desc`;
       const activities = await supabaseFetch('user_activity', query);
-      
+
       if (!activities || activities.length === 0) {
         setStreakData([]);
         setLoading(false);
@@ -379,7 +378,7 @@ const StreaksScreen = ({ friends, user }) => {
         const sentToFriend = activities.filter(
           act => act.sender_id === user.id && act.receiver_id === friend.id
         );
-        
+
         // Get meals received FROM this friend
         const receivedFromFriend = activities.filter(
           act => act.sender_id === friend.id && act.receiver_id === user.id
@@ -387,7 +386,7 @@ const StreaksScreen = ({ friends, user }) => {
 
         // Calculate streak (consecutive days with reciprocal sharing)
         const streak = calculateStreak(sentToFriend, receivedFromFriend);
-        
+
         // Calculate average meal price
         const allMeals = [...sentToFriend, ...receivedFromFriend];
         const avgPrice = allMeals.length > 0
@@ -426,24 +425,24 @@ const StreaksScreen = ({ friends, user }) => {
     // Group activities by date
     const sentDates = new Set(sent.map(act => new Date(act.created_at).toDateString()));
     const receivedDates = new Set(received.map(act => new Date(act.created_at).toDateString()));
-    
+
     // Find dates where BOTH users shared meals
     const mutualDates = [...sentDates].filter(date => receivedDates.has(date));
-    
+
     if (mutualDates.length === 0) return 0;
 
     // Sort dates and count consecutive days
     const sortedDates = mutualDates
       .map(d => new Date(d))
       .sort((a, b) => b - a); // Most recent first
-    
+
     let streak = 0;
     let currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
 
     for (let date of sortedDates) {
       const dayDiff = Math.floor((currentDate - date) / (1000 * 60 * 60 * 24));
-      
+
       if (dayDiff === streak) {
         streak++;
       } else {
@@ -463,7 +462,7 @@ const StreaksScreen = ({ friends, user }) => {
         <h2 className="text-3xl font-bold mb-2 text-white">Streaks</h2>
         <p className="opacity-90">Keep the momentum going!</p>
       </div>
-      
+
       <div className="p-4 max-w-4xl mx-auto">
         {loading ? (
           <div className="bg-white rounded-xl shadow-lg p-12 text-center">
@@ -478,7 +477,7 @@ const StreaksScreen = ({ friends, user }) => {
                 <p className="text-4xl font-bold text-orange-600">{longestStreak}</p>
                 <p className="text-xs text-gray-500 mt-1">consecutive days</p>
               </div>
-              
+
               <div className="bg-white rounded-xl shadow-lg p-6 text-center">
                 <TrendingUp className="w-12 h-12 text-green-500 mx-auto mb-2" />
                 <p className="text-gray-600 text-sm">Active Streaks</p>
@@ -580,16 +579,16 @@ const StreaksScreen = ({ friends, user }) => {
   );
 };
 
-const ShareScreen = ({ 
-  selectedMeal, 
-  friends, 
-  selectedFriendsForMeal, 
-  setSelectedFriendsForMeal, 
-  sendMealToFriends, 
-  setCurrentScreen 
+const ShareScreen = ({
+  selectedMeal,
+  friends,
+  selectedFriendsForMeal,
+  setSelectedFriendsForMeal,
+  sendMealToFriends,
+  setCurrentScreen
 }) => {
   const toggleFriendSelection = (friendId) => {
-    setSelectedFriendsForMeal(prev => 
+    setSelectedFriendsForMeal(prev =>
       prev.includes(friendId)
         ? prev.filter(id => id !== friendId)
         : [...prev, friendId]
@@ -602,7 +601,7 @@ const ShareScreen = ({
         <h2 className="text-3xl font-bold mb-2 text-white">Share Meal</h2>
         <p className="opacity-90">Send {selectedMeal?.name} to friends</p>
       </div>
-      
+
       <div className="p-4 max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <h3 className="text-xl font-bold text-gray-800 mb-2">{selectedMeal?.name}</h3>
@@ -615,7 +614,7 @@ const ShareScreen = ({
         </div>
 
         <h3 className="text-lg font-bold text-gray-800 mb-4">Select friends</h3>
-        
+
         {friends.length === 0 ? (
           <div className="bg-white rounded-xl shadow-md p-12 text-center">
             <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -627,11 +626,10 @@ const ShareScreen = ({
             {friends.map(friend => {
               const isSelected = selectedFriendsForMeal.includes(friend.id);
               return (
-                <div 
-                  key={friend.id} 
-                  className={`bg-white rounded-xl shadow-md p-6 mb-4 cursor-pointer transition-all ${
-                    isSelected ? 'ring-4 ring-orange-500' : ''
-                  }`}
+                <div
+                  key={friend.id}
+                  className={`bg-white rounded-xl shadow-md p-6 mb-4 cursor-pointer transition-all ${isSelected ? 'ring-4 ring-orange-500' : ''
+                    }`}
                   onClick={() => toggleFriendSelection(friend.id)}
                 >
                   <div className="flex items-center justify-between">
@@ -646,9 +644,8 @@ const ShareScreen = ({
                         </div>
                       </div>
                     </div>
-                    <div className={`w-8 h-8 rounded-full border-4 flex items-center justify-center ${
-                      isSelected ? 'bg-orange-500 border-orange-500' : 'bg-white border-gray-300'
-                    }`}>
+                    <div className={`w-8 h-8 rounded-full border-4 flex items-center justify-center ${isSelected ? 'bg-orange-500 border-orange-500' : 'bg-white border-gray-300'
+                      }`}>
                       {isSelected && <span className="text-white text-lg">✓</span>}
                     </div>
                   </div>
@@ -659,11 +656,10 @@ const ShareScreen = ({
             <button
               onClick={sendMealToFriends}
               disabled={selectedFriendsForMeal.length === 0}
-              className={`w-full py-3 rounded-lg font-bold transition-all mb-2 ${
-                selectedFriendsForMeal.length === 0
-                  ? 'bg-gray-200 text-gray-500'
-                  : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white'
-              }`}
+              className={`w-full py-3 rounded-lg font-bold transition-all mb-2 ${selectedFriendsForMeal.length === 0
+                ? 'bg-gray-200 text-gray-500'
+                : 'bg-gradient-to-r from-orange-500 to-pink-500 text-white'
+                }`}
             >
               Send to {selectedFriendsForMeal.length} Friend{selectedFriendsForMeal.length !== 1 ? 's' : ''}
             </button>
@@ -692,7 +688,7 @@ const BudgetScreen = ({ budget, setBudget, trackActivity }) => {
     const oldBudget = budget;
     setBudget(tempBudget);
     setIsEditing(false);
-    
+
     trackActivity('change_budget', {
       old_budget: oldBudget,
       new_budget: tempBudget,
@@ -706,12 +702,12 @@ const BudgetScreen = ({ budget, setBudget, trackActivity }) => {
         <h2 className="text-3xl font-bold mb-2 text-white">Your Budget</h2>
         <p className="opacity-90">Track your meal spending</p>
       </div>
-      
+
       <div className="p-4 max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-green-100">
           <div className="text-center mb-6">
             <p className="text-gray-600 mb-2">Weekly Budget</p>
-            
+
             {isEditing ? (
               <div className="flex flex-col items-center gap-3">
                 <div className="flex items-center gap-2">
@@ -729,8 +725,8 @@ const BudgetScreen = ({ budget, setBudget, trackActivity }) => {
                   <button onClick={saveBudget} className="bg-green-500 text-white px-6 py-2 rounded-lg font-bold">
                     Save
                   </button>
-                  <button 
-                    onClick={() => { setTempBudget(budget); setIsEditing(false); }} 
+                  <button
+                    onClick={() => { setTempBudget(budget); setIsEditing(false); }}
                     className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-bold"
                   >
                     Cancel
@@ -740,11 +736,11 @@ const BudgetScreen = ({ budget, setBudget, trackActivity }) => {
             ) : (
               <div className="flex flex-col items-center gap-3">
                 <span className="text-5xl font-bold text-gray-800">KSh {budget}</span>
-                <button 
-                  onClick={() => { 
+                <button
+                  onClick={() => {
                     setTempBudget(''); // Start blank when editing
-                    setIsEditing(true); 
-                  }} 
+                    setIsEditing(true);
+                  }}
                   className="text-green-600 font-bold hover:underline"
                 >
                   ✏️ Edit Budget
@@ -754,15 +750,15 @@ const BudgetScreen = ({ budget, setBudget, trackActivity }) => {
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-center">
-  <div className="bg-blue-50 p-4 rounded-lg">
-    <p className="text-gray-600 text-sm">Daily Average</p>
-    <p className="text-2xl font-bold text-blue-600">KSh {isNaN(budget) ? 0 : Math.round(Number(budget) / 7)}</p>
-  </div>
-  <div className="bg-purple-50 p-4 rounded-lg">
-    <p className="text-gray-600 text-sm">Per Meal</p>
-    <p className="text-2xl font-bold text-purple-600">KSh {isNaN(budget) ? 0 : Math.round(Number(budget) / 21)}</p>
-  </div>
-</div>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-gray-600 text-sm">Daily Average</p>
+              <p className="text-2xl font-bold text-blue-600">KSh {isNaN(budget) ? 0 : Math.round(Number(budget) / 7)}</p>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <p className="text-gray-600 text-sm">Per Meal</p>
+              <p className="text-2xl font-bold text-purple-600">KSh {isNaN(budget) ? 0 : Math.round(Number(budget) / 21)}</p>
+            </div>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-6">
@@ -783,18 +779,18 @@ const BudgetScreen = ({ budget, setBudget, trackActivity }) => {
   );
 };
 
-const SuggestionsScreen = ({ 
-  maxMealBudget, 
-  setMaxMealBudget, 
-  selectedCategory, 
-  setSelectedCategory, 
-  searchQuery, 
-  setSearchQuery, 
-  filteredMeals, 
-  setViewingRecipe, 
-  selectMeal, 
-  setCurrentScreen, 
-  trackActivity 
+const SuggestionsScreen = ({
+  maxMealBudget,
+  setMaxMealBudget,
+  selectedCategory,
+  setSelectedCategory,
+  searchQuery,
+  setSearchQuery,
+  filteredMeals,
+  setViewingRecipe,
+  selectMeal,
+  setCurrentScreen,
+  trackActivity
 }) => {
   const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [tempMaxBudget, setTempMaxBudget] = useState(''); // CHANGED: Start blank
@@ -805,11 +801,11 @@ const SuggestionsScreen = ({
       alert("Max meal budget must be at least KSh 50");
       return;
     }
-    
+
     const oldMaxBudget = maxMealBudget;
     setMaxMealBudget(newBudget);
     setIsEditingBudget(false);
-    
+
     trackActivity('change_max_meal_budget', {
       old_max_budget: oldMaxBudget,
       new_max_budget: newBudget,
@@ -823,12 +819,12 @@ const SuggestionsScreen = ({
         <h2 className="text-2xl font-bold mb-2 text-white">Today's Suggestions</h2>
         <p className="text-base opacity-90">Delicious meals within your budget</p>
       </div>
-      
+
       <div className="p-4 max-w-6xl mx-auto">
         <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-orange-100">
           <div className="mb-6">
             <label className="text-lg font-bold text-gray-800 mb-3 block">Max Meal Budget</label>
-            
+
             {isEditingBudget ? (
               <div className="flex items-center gap-3">
                 <span className="text-2xl font-bold text-gray-800">KSh</span>
@@ -845,8 +841,8 @@ const SuggestionsScreen = ({
                 <button onClick={saveMealBudget} className="bg-orange-500 text-white px-4 py-2 rounded-lg font-semibold">
                   Save
                 </button>
-                <button 
-                  onClick={() => { setTempMaxBudget(''); setIsEditingBudget(false); }} 
+                <button
+                  onClick={() => { setTempMaxBudget(''); setIsEditingBudget(false); }}
                   className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold"
                 >
                   Cancel
@@ -855,11 +851,11 @@ const SuggestionsScreen = ({
             ) : (
               <div className="flex items-center gap-3">
                 <span className="text-3xl font-bold text-orange-600">KSh {maxMealBudget}</span>
-                <button 
-                  onClick={() => { 
-                    setTempMaxBudget(''); 
-                    setIsEditingBudget(true); 
-                  }} 
+                <button
+                  onClick={() => {
+                    setTempMaxBudget('');
+                    setIsEditingBudget(true);
+                  }}
                   className="text-orange-600 hover:text-orange-700 font-semibold text-sm"
                 >
                   ✏️ Edit
@@ -878,11 +874,10 @@ const SuggestionsScreen = ({
                     setSelectedCategory(category);
                     trackActivity('filter_category', { category: category, timestamp: new Date().toISOString() });
                   }}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                    selectedCategory === category
-                      ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${selectedCategory === category
+                    ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700'
+                    }`}
                 >
                   {category}
                 </button>
@@ -929,7 +924,7 @@ const SuggestionsScreen = ({
                     KSh {meal.budget}
                   </span>
                 </div>
-                
+
                 <div className="flex gap-2 mt-4">
                   <button onClick={() => setViewingRecipe(meal)} className="flex-1 bg-blue-500 text-white py-2 rounded-lg font-bold">
                     View
@@ -956,7 +951,7 @@ const FeedbackScreen = ({ submitFeedback, trackActivity }) => {
         <h2 className="text-3xl font-bold mb-2 text-white">Feedback</h2>
         <p className="opacity-90">Help us improve DishiStudio</p>
       </div>
-      
+
       <div className="p-4 max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-lg p-6 border border-blue-50">
           <label className="text-lg font-bold text-gray-800 mb-3 block">
@@ -968,7 +963,7 @@ const FeedbackScreen = ({ submitFeedback, trackActivity }) => {
             placeholder="What do you think about DishiStudio? Any suggestions?"
             className="w-full p-4 border border-gray-300 rounded-lg mb-4 h-40 resize-none focus:ring-2 focus:ring-blue-500 outline-none"
           />
-          
+
           <button
             onClick={() => {
               if (feedback.trim()) {
@@ -985,7 +980,7 @@ const FeedbackScreen = ({ submitFeedback, trackActivity }) => {
         <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-gray-50">
           <h3 className="text-xl font-bold text-gray-800 mb-4">Quick Feedback</h3>
           <div className="grid grid-cols-2 gap-3">
-            <button 
+            <button
               onClick={() => {
                 trackActivity('quick_feedback', { type: 'love_it', timestamp: new Date().toISOString() });
                 alert('Thanks for the love! ❤️');
@@ -993,7 +988,7 @@ const FeedbackScreen = ({ submitFeedback, trackActivity }) => {
               className="p-3 border-2 border-gray-100 rounded-lg font-medium hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
               😊 Love it!
             </button>
-            <button 
+            <button
               onClick={() => {
                 trackActivity('quick_feedback', { type: 'need_more_meals', timestamp: new Date().toISOString() });
                 alert('Thanks! We\'ll add more meals soon! 🍽️');
@@ -1001,7 +996,7 @@ const FeedbackScreen = ({ submitFeedback, trackActivity }) => {
               className="p-3 border-2 border-gray-100 rounded-lg font-medium hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
               🤔 Need more meals
             </button>
-            <button 
+            <button
               onClick={() => {
                 trackActivity('quick_feedback', { type: 'budget_helpful', timestamp: new Date().toISOString() });
                 alert('Glad the budget feature helps! 💰');
@@ -1009,7 +1004,7 @@ const FeedbackScreen = ({ submitFeedback, trackActivity }) => {
               className="p-3 border-2 border-gray-100 rounded-lg font-medium hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
               💰 Budget helpful
             </button>
-            <button 
+            <button
               onClick={() => {
                 trackActivity('quick_feedback', { type: 'love_streaks', timestamp: new Date().toISOString() });
                 alert('Keep those streaks going! 🔥');
@@ -1024,7 +1019,28 @@ const FeedbackScreen = ({ submitFeedback, trackActivity }) => {
   );
 };
 
-const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, setTermsText, TERMS_OF_SERVICE, PRIVACY_POLICY }) => {
+
+
+// --- NOTIFICATION HELPERS ---
+
+const urlBase64ToUint8Array = (base64String) => {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// ---------------------------
+
+const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, setTermsText, TERMS_OF_SERVICE, PRIVACY_POLICY, notificationsEnabled, toggleNotifications }) => {
   const [showDeleteSection, setShowDeleteSection] = useState(false);
 
   return (
@@ -1033,7 +1049,7 @@ const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, setTermsT
         <h2 className="text-3xl font-bold mb-2 text-white">Profile & Settings</h2>
         <p className="opacity-90">Manage your account</p>
       </div>
-      
+
       <div className="p-4 max-w-4xl mx-auto space-y-4">
         {/* User Info */}
         <div className="bg-white rounded-xl shadow-lg p-6 border border-purple-50">
@@ -1051,6 +1067,27 @@ const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, setTermsT
               <p className="text-sm text-gray-600">Email</p>
               <p className="text-lg font-semibold text-gray-800">{user?.email}</p>
             </div>
+          </div>
+        </div>
+
+        {/* --- NEW: SETTINGS SECTION --- */}
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-blue-50">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Settings</h3>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-gray-800">Notifications</p>
+              <p className="text-sm text-gray-600">Get alerts for friends and streaks</p>
+            </div>
+            <button
+              onClick={toggleNotifications}
+              className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 focus:outline-none ${notificationsEnabled ? 'bg-green-500' : 'bg-gray-300'
+                }`}
+            >
+              <div
+                className={`bg-white w-6 h-6 rounded-full shadow-md transform duration-300 ${notificationsEnabled ? 'translate-x-6' : ''
+                  }`}
+              />
+            </button>
           </div>
         </div>
 
@@ -1085,7 +1122,7 @@ const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, setTermsT
         <div className="bg-red-50 rounded-xl shadow-lg p-6 border-2 border-red-200">
           <h3 className="text-xl font-bold text-red-800 mb-2">Danger Zone</h3>
           <p className="text-sm text-red-600 mb-4">These actions cannot be undone</p>
-          
+
           {!showDeleteSection ? (
             <button
               onClick={() => setShowDeleteSection(true)}
@@ -1109,7 +1146,7 @@ const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, setTermsT
                   This action CANNOT be reversed!
                 </p>
               </div>
-              
+
               <div className="flex gap-2">
                 <button
                   onClick={handleDeleteAccount}
@@ -1139,102 +1176,228 @@ const MealPlannerApp = () => {
   const searchRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-  // Check if the URL contains the recovery type
-  const hash = window.location.hash;
-  if (hash && hash.includes('type=recovery')) {
-    setCurrentScreen('reset-password');
-  }
-}, []);
+  // Notification State
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    return localStorage.getItem('notifications_enabled') === 'true';
+  });
 
-// Auto-focus when component loads
-useEffect(() => {
-  searchRef.current?.focus();
-}, []);
+  // --- NOTIFICATION HANDLERS ---
 
-// Allow typing anywhere to focus search
-useEffect(() => {
-  const handleKeyDown = (e) => {
-    const tag = document.activeElement.tagName;
-
-    if (
-      tag !== 'INPUT' &&
-      tag !== 'TEXTAREA' &&
-      !e.ctrlKey &&
-      !e.metaKey
-    ) {
-      searchRef.current?.focus();
+  const handleNotificationToggle = async () => {
+    if (!notificationsEnabled) {
+      // Turn ON
+      const result = await Notification.requestPermission();
+      if (result === 'granted') {
+        setNotificationsEnabled(true);
+        localStorage.setItem('notifications_enabled', 'true');
+        subscribeToPush(); // Try to subscribe
+        alert("Notifications enabled! You'll get alerts even when the app is in the background.");
+      } else {
+        alert("Permission denied. We cannot send notifications.");
+      }
+    } else {
+      // Turn OFF
+      setNotificationsEnabled(false);
+      localStorage.setItem('notifications_enabled', 'false');
+      // Ideally unsubscribe from push here too
+      alert("Notifications disabled.");
     }
   };
 
-  window.addEventListener('keydown', handleKeyDown);
-  return () => window.removeEventListener('keydown', handleKeyDown);
-}, []);
+  const subscribeToPush = async () => {
+    if ('serviceWorker' in navigator && 'PushManager' in window && user?.id) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+
+        // VAPID Public Key - YOU NEED TO GENERATE THIS
+        // For now we use a dummy logic, user needs to replace this
+        const publicVapidKey = 'YOUR_PUBLIC_VAPID_KEY_HERE';
+
+        // This will only work if VAPID key is valid. 
+        // Failing gracefully if key is invalid/placeholder.
+        if (publicVapidKey === 'YOUR_PUBLIC_VAPID_KEY_HERE') {
+          console.log("VAPID Key not set. Push subscription skipped.");
+          return;
+        }
+
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+        });
+
+        console.log('Push Subscription:', subscription);
+
+        // Save to DB
+        await supabaseFetch('push_subscriptions', '', 'POST', {
+          user_id: user.id,
+          subscription: subscription,
+          created_at: new Date().toISOString()
+        });
+
+      } catch (error) {
+        console.error('Failed to subscribe to push:', error);
+      }
+    }
+  };
+
+  // Realtime Listeners for Immediate "background tab" feedback
+  useEffect(() => {
+    if (!user?.id || !notificationsEnabled) return;
+
+    console.log("Setting up Realtime Listeners for Notifications...");
+
+    // 1. Friend Requests Listener
+    const requestChannel = supabase
+      .channel('public:friend_requests')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'friend_requests',
+        filter: `receiver_id=eq.${user.id}`
+      }, (payload) => {
+        new Notification("New Friend Request", {
+          body: "You have a new friend request!",
+          icon: "/logo192.png"
+        });
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'friend_requests',
+        filter: `sender_id=eq.${user.id}`
+      }, (payload) => {
+        if (payload.new.status === 'accepted') {
+          new Notification("Friend Request Accepted", {
+            body: "Your friend request was accepted!",
+            icon: "/logo192.png"
+          });
+        }
+      })
+      .subscribe();
+
+    // 2. Shared Meals / Activity Listener
+    const activityChannel = supabase
+      .channel('public:user_activity')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'user_activity',
+        filter: `receiver_id=eq.${user.id}`
+      }, (payload) => {
+        if (payload.new.action_type === 'share_meal') {
+          const mealName = payload.new.action_details?.meal_name || "a meal";
+          new Notification("New Shared Meal", {
+            body: `Someone shared ${mealName} with you!`,
+            icon: "/logo192.png"
+          });
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(requestChannel);
+      supabase.removeChannel(activityChannel);
+    };
+  }, [user?.id, notificationsEnabled]);
+
+  // -----------------------------
+
+  useEffect(() => {
+    // Check if the URL contains the recovery type
+    const hash = window.location.hash;
+    if (hash && hash.includes('type=recovery')) {
+      setCurrentScreen('reset-password');
+    }
+  }, []);
+
+  // Auto-focus when component loads
+  useEffect(() => {
+    searchRef.current?.focus();
+  }, []);
+
+  // Allow typing anywhere to focus search
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const tag = document.activeElement.tagName;
+
+      if (
+        tag !== 'INPUT' &&
+        tag !== 'TEXTAREA' &&
+        !e.ctrlKey &&
+        !e.metaKey
+      ) {
+        searchRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const mealsData = [
-  { id: 1, name: 'Millet / Uji Porridge', description: 'Traditional millet breakfast porridge', budget: 70, category: 'Breakfast', ingredients: ['Millet flour', 'Water', 'Optional milk'], recipe: '1. Boil water in a pot. 2. Mix millet flour with cold water to form a smooth paste. 3. Pour the paste into boiling water while stirring continuously. 4. Cook for 10-15 minutes while stirring. 5. Add milk if desired. 6. Serve hot.', healthScore: 5, culturalNote: 'Many Kenyans grew up taking uji before school or farm work', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 2, name: 'Boiled Sweet Potatoes & Eggs', description: 'Boiled sweet potatoes with eggs', budget: 90, category: 'Breakfast', ingredients: ['Sweet potatoes', 'Eggs', 'Salt'], recipe: '1. Peel and wash sweet potatoes. 2. Boil sweet potatoes in salted water until tender (20-30 minutes). 3. In a separate pot, boil eggs for 10 minutes. 4. Drain and serve together.', healthScore: 5, culturalNote: 'A common student and bedsitter breakfast', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 3, name: 'Boiled Maize & Greens', description: 'Boiled maize served with greens', budget: 80, category: 'Breakfast', ingredients: ['Dry maize', 'Sukuma wiki', 'Salt'], recipe: '1. Soak dry maize overnight. 2. Boil maize until tender (1-2 hours). 3. Wash and chop sukuma wiki. 4. Sauté greens with salt. 5. Serve maize with greens on the side.', healthScore: 4, culturalNote: 'Often sold early morning by roadside vendors', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 4, name: 'Vegetable Omelette', description: 'Egg omelette with vegetables', budget: 110, category: 'Breakfast', ingredients: ['Eggs', 'Onion', 'Tomato', 'Spinach', 'Cooking oil'], recipe: '1. Chop onion, tomato, and spinach finely. 2. Beat eggs in a bowl with salt. 3. Heat oil in a pan. 4. Add vegetables and sauté for 2 minutes. 5. Pour in beaten eggs. 6. Cook until set, flip and cook other side. 7. Serve hot.', healthScore: 5, culturalNote: 'A quick filling breakfast when time is limited', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 5, name: 'Mandazi & Milk', description: 'Fried dough served with milk', budget: 80, category: 'Breakfast', ingredients: ['Wheat flour', 'Sugar', 'Cooking oil', 'Milk'], recipe: '1. Mix flour, sugar, and a pinch of salt. 2. Add water gradually to form dough. 3. Let dough rest for 30 minutes. 4. Roll out and cut into triangles. 5. Heat oil and deep fry until golden brown. 6. Serve with warm milk.', healthScore: 2, culturalNote: 'Classic chai and mandazi combo especially on weekends', veg: false, leg: false, protein: false, lowSugar: false, lowSalt: false, moderateFats: true },
-  { id: 6, name: 'Fruit Salad', description: 'Fresh mixed seasonal fruits', budget: 100, category: 'Breakfast', ingredients: ['Mango', 'Banana', 'Pawpaw', 'Orange'], recipe: '1. Wash all fruits thoroughly. 2. Peel and dice mango, banana, and pawpaw. 3. Peel and segment orange. 4. Mix all fruits in a bowl. 5. Chill and serve.', healthScore: 5, culturalNote: 'Common in urban homes and juice kiosks', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 7, name: 'Tea & Whole Grain Toast', description: 'Tea served with whole grain toast', budget: 60, category: 'Breakfast', ingredients: ['Tea leaves', 'Water', 'Milk', 'Whole grain bread'], recipe: '1. Boil water with tea leaves. 2. Add milk and simmer for 2 minutes. 3. Strain tea. 4. Toast bread until golden. 5. Serve together.', healthScore: 4, culturalNote: 'The most normal weekday breakfast in Kenyan homes', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 8, name: 'Egg Sandwich', description: 'Whole grain sandwich with eggs', budget: 110, category: 'Breakfast', ingredients: ['Whole grain bread', 'Eggs', 'Tomato'], recipe: '1. Boil or fry eggs. 2. Slice tomato thinly. 3. Toast bread. 4. Place egg and tomato between bread slices. 5. Cut and serve.', healthScore: 5, culturalNote: 'Popular with people rushing to work or class', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 9, name: 'Sweet Potato & Eggs', description: 'Boiled sweet potato with eggs', budget: 90, category: 'Breakfast', ingredients: ['Sweet potatoes', 'Eggs', 'Salt'], recipe: '1. Peel and wash sweet potatoes. 2. Boil sweet potatoes in salted water until tender. 3. In a separate pot, boil eggs for 10 minutes. 4. Drain and serve together.', healthScore: 5, culturalNote: 'Affordable and filling upcountry breakfast', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 10, name: 'Mandazi & Tea', description: 'Mandazi served with tea', budget: 70, category: 'Breakfast', ingredients: ['Wheat flour', 'Sugar', 'Cooking oil', 'Tea leaves', 'Milk'], recipe: '1. Prepare mandazi as described earlier. 2. Boil tea with milk. 3. Serve mandazi with hot tea.', healthScore: 2, culturalNote: 'Common kiosk breakfast combo', veg: false, leg: false, protein: false, lowSugar: false, lowSalt: false, moderateFats: true },
-  { id: 11, name: 'Fruit Smoothie', description: 'Blended fruits with milk', budget: 100, category: 'Breakfast', ingredients: ['Banana', 'Mango', 'Milk'], recipe: '1. Peel and chop banana and mango. 2. Blend with milk until smooth. 3. Add ice if desired. 4. Serve immediately.', healthScore: 4, culturalNote: 'Popular with gym-goers and young professionals', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 12, name: 'Arrow Roots & Tea', description: 'Boiled arrow roots with tea', budget: 70, category: 'Breakfast', ingredients: ['Arrow roots', 'Tea leaves', 'Milk'], recipe: '1. Wash and peel arrow roots. 2. Boil until tender (30-40 minutes). 3. Prepare tea with milk. 4. Serve together.', healthScore: 4, culturalNote: 'Very traditional breakfast in many Kenyan homes', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 13, name: 'Boiled Cassava & Tea', description: 'Boiled cassava served with tea', budget: 70, category: 'Breakfast', ingredients: ['Cassava', 'Tea leaves', 'Milk'], recipe: '1. Peel and wash cassava. 2. Boil in salted water until tender (30-40 minutes). 3. Prepare milk tea. 4. Serve together.', healthScore: 4, culturalNote: 'Common in coastal and western Kenya', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 14, name: 'Boiled Arrow Roots & Eggs', description: 'Arrow roots with boiled eggs', budget: 100, category: 'Breakfast', ingredients: ['Arrow roots', 'Eggs', 'Salt'], recipe: '1. Wash and peel arrow roots. 2. Boil until tender. 3. In a separate pot, boil eggs for 10 minutes. 4. Serve together.', healthScore: 5, culturalNote: 'A strong breakfast often taken by farmers', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 15, name: 'Bread & Avocado', description: 'Bread served with avocado', budget: 80, category: 'Breakfast', ingredients: ['Bread', 'Avocado'], recipe: '1. Slice bread. 2. Cut avocado in half, remove seed. 3. Scoop avocado and mash with salt. 4. Spread on bread. 5. Serve.', healthScore: 4, culturalNote: 'Very popular when avocado is in season', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 16, name: 'Boiled Eggs & Avocado', description: 'Boiled eggs served with avocado', budget: 90, category: 'Breakfast', ingredients: ['Eggs', 'Avocado'], recipe: '1. Boil eggs for 10 minutes. 2. Peel eggs. 3. Cut avocado in half. 4. Serve together with salt.', healthScore: 5, culturalNote: 'Simple protein plus healthy mafuta good fats', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 17, name: 'Ugali & Sukuma Wiki', description: 'Ugali served with collard greens', budget: 120, category: 'Lunch', ingredients: ['Maize flour', 'Sukuma wiki', 'Cooking oil'], recipe: '1. Boil water in a sufuria. 2. Add maize flour gradually while stirring to avoid lumps. 3. Cook for 10 minutes, stirring constantly. 4. Wash and chop sukuma wiki. 5. Sauté with onions and tomatoes. 6. Serve ugali with sukuma.', healthScore: 5, culturalNote: 'If you say Kenyan food this is usually the first thing people think of', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 18, name: 'Githeri (Maize & Beans)', description: 'Boiled maize and beans', budget: 130, category: 'Lunch', ingredients: ['Maize', 'Beans', 'Salt'], recipe: '1. Soak maize and beans overnight. 2. Boil together until tender (2-3 hours). 3. Add salt to taste. 4. Can add onions and tomatoes for flavor. 5. Serve hot.', healthScore: 5, culturalNote: 'Very common in central Kenya and school menus', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 19, name: 'Grilled Fish with Vegetables', description: 'Grilled fish served with vegetables', budget: 250, category: 'Lunch', ingredients: ['Fish', 'Cabbage', 'Carrots'], recipe: '1. Clean and season fish with salt and lemon. 2. Grill fish until cooked through. 3. Chop cabbage and carrots. 4. Boil vegetables until tender. 5. Serve fish with vegetables.', healthScore: 5, culturalNote: 'Common lakeside meal especially around Kisumu', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 20, name: 'Chapati with Vegetable Curry', description: 'Chapati served with vegetable curry', budget: 140, category: 'Lunch', ingredients: ['Wheat flour', 'Mixed vegetables', 'Spices'], recipe: '1. Make chapati dough with flour, water, and oil. 2. Roll out and cook on hot pan. 3. Cook mixed vegetables with curry spices. 4. Serve chapati with curry.', healthScore: 5, culturalNote: 'Often cooked on weekends or special days', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 21, name: 'Ndengu Stew & Rice', description: 'Green grams served with rice', budget: 180, category: 'Lunch', ingredients: ['Ndengu', 'Rice', 'Onion', 'Tomato'], recipe: '1. Boil ndengu until tender. 2. Cook rice separately. 3. Fry onions and tomatoes. 4. Add boiled ndengu to tomato mixture. 5. Serve with rice.', healthScore: 5, culturalNote: 'Very common nyumba ya kupanga lunch', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 22, name: 'Tilapia & Ugali', description: 'Grilled tilapia served with ugali', budget: 250, category: 'Dinner', ingredients: ['Tilapia', 'Maize flour'], recipe: '1. Clean and season tilapia. 2. Grill or fry fish. 3. Prepare ugali as usual. 4. Serve together with kachumbari.', healthScore: 5, culturalNote: 'A favourite around Lake Victoria', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 23, name: 'Ndengu Chapati', description: 'Green grams served with chapati', budget: 150, category: 'Lunch', ingredients: ['Ndengu', 'Wheat flour'], recipe: '1. Boil ndengu with onions and tomatoes. 2. Prepare chapati dough. 3. Roll and cook chapati. 4. Serve ndengu with chapati.', healthScore: 5, culturalNote: 'Popular among students and bachelors', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 24, name: 'Vegetable Stew with Rice', description: 'Mixed vegetable stew with rice', budget: 140, category: 'Dinner', ingredients: ['Rice', 'Carrots', 'Spinach', 'Tomato'], recipe: '1. Cook rice. 2. Dice carrots and chop spinach. 3. Fry vegetables with tomatoes. 4. Simmer until tender. 5. Serve with rice.', healthScore: 5, culturalNote: 'Healthy everyday nyumba ya kupanga meal', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 25, name: 'Omena Stew & Ugali', description: 'Omena stew served with ugali', budget: 220, category: 'Dinner', ingredients: ['Omena', 'Tomato', 'Onion', 'Maize flour'], recipe: '1. Clean omena thoroughly. 2. Fry with onions and tomatoes. 3. Add water and simmer. 4. Prepare ugali. 5. Serve together.', healthScore: 5, culturalNote: 'Cheap but powerful protein in western Kenya', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 26, name: 'Chicken & Vegetable Curry', description: 'Chicken cooked with vegetables', budget: 220, category: 'Dinner', ingredients: ['Chicken', 'Carrots', 'Peas', 'Spices'], recipe: '1. Cut chicken into pieces. 2. Fry chicken until browned. 3. Add vegetables and curry spices. 4. Simmer until cooked. 5. Serve with rice or chapati.', healthScore: 5, culturalNote: 'Home-style curry often cooked on Sundays', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 27, name: 'Brown Rice & Beans', description: 'Brown rice with beans', budget: 180, category: 'Lunch', ingredients: ['Brown rice', 'Beans'], recipe: '1. Soak beans overnight. 2. Boil beans until tender. 3. Cook brown rice separately. 4. Serve together.', healthScore: 5, culturalNote: 'Chosen by people trying to eat healthier', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 28, name: 'Ugali & Cabbage Stew', description: 'Ugali served with cabbage stew', budget: 120, category: 'Dinner', ingredients: ['Maize flour', 'Cabbage'], recipe: '1. Prepare ugali. 2. Chop cabbage. 3. Fry with onions and tomatoes. 4. Serve with ugali.', healthScore: 4, culturalNote: 'Budget-friendly end-month meal', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 29, name: 'Matoke & Beef Stew', description: 'Matoke served with beef stew', budget: 220, category: 'Dinner', ingredients: ['Matoke', 'Beef', 'Spices'], recipe: '1. Peel and boil matoke. 2. Cook beef with onions and tomatoes. 3. Add spices and simmer. 4. Serve together.', healthScore: 5, culturalNote: 'Common in western Kenya homes', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 30, name: 'Matoke & Chicken Stew', description: 'Matoke served with chicken stew', budget: 220, category: 'Dinner', ingredients: ['Matoke', 'Chicken'], recipe: '1. Peel and boil matoke. 2. Cook chicken with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Seen as a healthier matoke option', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 31, name: 'Rice & Mixed Legume Stew', description: 'Rice served with mixed legumes', budget: 180, category: 'Lunch', ingredients: ['Rice', 'Lentils', 'Beans'], recipe: '1. Cook rice. 2. Boil mixed legumes. 3. Add tomatoes and onions. 4. Serve with rice.', healthScore: 5, culturalNote: 'Affordable plant protein meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 32, name: 'Chicken Stew & Ugali', description: 'Chicken stew with ugali', budget: 200, category: 'Dinner', ingredients: ['Chicken', 'Maize flour'], recipe: '1. Cook chicken with tomatoes and onions. 2. Prepare ugali. 3. Serve together.', healthScore: 5, culturalNote: 'Classic Sunday lunch meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 33, name: 'Ugali & Beef Stew', description: 'Ugali served with beef stew', budget: 200, category: 'Dinner', ingredients: ['Maize flour', 'Beef'], recipe: '1. Cook beef stew with tomatoes. 2. Prepare ugali. 3. Serve together.', healthScore: 5, culturalNote: 'Very common across Kenyan households', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 34, name: 'Rice & Cabbage Stew', description: 'Rice served with cabbage stew', budget: 130, category: 'Lunch', ingredients: ['Rice', 'Cabbage'], recipe: '1. Cook rice. 2. Prepare cabbage stew. 3. Serve together.', healthScore: 4, culturalNote: 'Simple healthy meal when money is tight', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 35, name: 'Ugali & Spinach Stew', description: 'Ugali served with spinach', budget: 120, category: 'Dinner', ingredients: ['Maize flour', 'Spinach'], recipe: '1. Prepare ugali. 2. Cook spinach with onions. 3. Serve together.', healthScore: 5, culturalNote: 'Common when sukuma is replaced with spinach', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 36, name: 'Pumpkin Leaves (Seveve) & Ugali', description: 'Ugali with pumpkin leaves', budget: 120, category: 'Dinner', ingredients: ['Maize flour', 'Pumpkin leaves'], recipe: '1. Prepare ugali. 2. Cook pumpkin leaves with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'A delicacy in western Kenya homes', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 37, name: 'Ugali & Cowpea Leaves', description: 'Ugali with cowpea leaves', budget: 120, category: 'Dinner', ingredients: ['Maize flour', 'Cowpea leaves'], recipe: '1. Prepare ugali. 2. Cook cowpea leaves. 3. Serve together.', healthScore: 5, culturalNote: 'Often cooked during rainy seasons', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 38, name: 'Rice & Fish Stew', description: 'Rice served with fish stew', budget: 220, category: 'Dinner', ingredients: ['Rice', 'Fish', 'Tomato'], recipe: '1. Cook rice. 2. Prepare fish stew. 3. Serve together.', healthScore: 5, culturalNote: 'Common in coastal and lakeside towns', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 39, name: 'Mukimo', description: 'Mashed potatoes with maize and greens', budget: 150, category: 'Dinner', ingredients: ['Potatoes', 'Maize', 'Greens'], recipe: '1. Boil potatoes, maize, and greens. 2. Mash together. 3. Serve hot.', healthScore: 5, culturalNote: 'Traditional food from central Kenya', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 40, name: 'Ugali & Goat Stew', description: 'Ugali served with goat meat stew', budget: 250, category: 'Dinner', ingredients: ['Maize flour', 'Goat meat'], recipe: '1. Cook goat meat until tender. 2. Prepare ugali. 3. Serve together.', healthScore: 5, culturalNote: 'Mostly cooked for guests or ceremonies', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 41, name: 'Rice & Chicken Stew', description: 'Rice served with chicken stew', budget: 200, category: 'Dinner', ingredients: ['Rice', 'Chicken'], recipe: '1. Cook rice. 2. Prepare chicken stew. 3. Serve together.', healthScore: 5, culturalNote: 'Family meal often cooked on special days', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 42, name: 'Ugali & Vegetable Curry', description: 'Ugali with mixed vegetable curry', budget: 130, category: 'Dinner', ingredients: ['Maize flour', 'Vegetables'], recipe: '1. Prepare ugali. 2. Cook mixed vegetables with curry spices. 3. Serve together.', healthScore: 5, culturalNote: 'Vegetarian option gaining popularity', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 43, name: 'Rice & Beef Stew', description: 'Rice served with beef stew', budget: 200, category: 'Dinner', ingredients: ['Rice', 'Beef'], recipe: '1. Cook rice. 2. Prepare beef stew. 3. Serve together.', healthScore: 5, culturalNote: 'Common lunch in town hotels', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 44, name: 'Ugali & Liver Stew', description: 'Ugali with liver stew', budget: 180, category: 'Dinner', ingredients: ['Maize flour', 'Liver'], recipe: '1. Prepare ugali. 2. Cook liver stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Known for boosting iron levels', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 45, name: 'Rice & Liver Stew', description: 'Rice served with liver stew', budget: 180, category: 'Dinner', ingredients: ['Rice', 'Liver'], recipe: '1. Cook rice. 2. Prepare liver stew. 3. Serve together.', healthScore: 5, culturalNote: 'Nutritious and filling meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 46, name: 'Rice & Beans', description: 'Rice served with beans', budget: 150, category: 'Lunch', ingredients: ['Rice', 'Beans'], recipe: '1. Cook rice and beans separately. 2. Serve together.', healthScore: 5, culturalNote: 'End-month lifesaver meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 47, name: 'Matumbo Stew & Ugali', description: 'Tripe stew served with ugali', budget: 180, category: 'Dinner', ingredients: ['Matumbo', 'Onion', 'Tomato', 'Maize flour'], recipe: '1. Clean matumbo thoroughly. 2. Boil until tender. 3. Fry with onions and tomatoes. 4. Prepare ugali. 5. Serve together.', healthScore: 4, culturalNote: 'Popular in local joints and markets', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 48, name: 'Matumbo Stew & Rice', description: 'Tripe stew served with rice', budget: 180, category: 'Dinner', ingredients: ['Matumbo', 'Rice'], recipe: '1. Clean matumbo thoroughly. 2. Boil until tender. 3. Fry with onions and tomatoes. 4. Cook rice. 5. Serve together.', healthScore: 4, culturalNote: 'Common street food lunch option', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 49, name: 'Rice & Minced Meat Stew', description: 'Rice with minced meat stew', budget: 180, category: 'Dinner', ingredients: ['Rice', 'Minced beef'], recipe: '1. Cook rice. 2. Prepare minced meat stew. 3. Serve together.', healthScore: 5, culturalNote: 'Easy to cook family meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 50, name: 'Ugali & Minced Meat Stew', description: 'Ugali with minced meat stew', budget: 180, category: 'Dinner', ingredients: ['Maize flour', 'Minced beef'], recipe: '1. Prepare ugali. 2. Cook minced meat stew. 3. Serve together.', healthScore: 5, culturalNote: 'Common quick supper meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 51, name: 'Spaghetti & Minced Meat Stew', description: 'Spaghetti served with minced meat', budget: 200, category: 'Dinner', ingredients: ['Spaghetti', 'Minced beef'], recipe: '1. Cook spaghetti according to package instructions. 2. Prepare minced meat stew. 3. Serve together.', healthScore: 3, culturalNote: 'Urban fusion dish especially for kids', veg: false, leg: false, protein: true, lowSugar: false, lowSalt: true, moderateFats: true },
-  { id: 52, name: 'Ugali & Peas Stew', description: 'Ugali served with peas stew', budget: 140, category: 'Dinner', ingredients: ['Maize flour', 'Peas'], recipe: '1. Prepare ugali. 2. Cook peas stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Plant protein option in many homes', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 53, name: 'Grilled Chicken & Rice', description: 'Grilled chicken served with rice', budget: 220, category: 'Dinner', ingredients: ['Chicken', 'Rice'], recipe: '1. Season and grill chicken. 2. Cook rice. 3. Serve together.', healthScore: 5, culturalNote: 'Balanced protein meal from eateries', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 54, name: 'Chapati & Beans Stew', description: 'Chapati served with beans stew', budget: 150, category: 'Lunch', ingredients: ['Wheat flour', 'Beans'], recipe: '1. Prepare chapati. 2. Cook beans stew. 3. Serve together.', healthScore: 5, culturalNote: 'Student-friendly and affordable meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 55, name: 'Rice & Kamande', description: 'Rice served with pigeon peas', budget: 160, category: 'Dinner', ingredients: ['Rice', 'Pigeon peas'], recipe: '1. Cook rice. 2. Boil pigeon peas with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Common in eastern and dry regions', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 56, name: 'Chapati & Kamande', description: 'Chapati served with pigeon peas', budget: 160, category: 'Dinner', ingredients: ['Wheat flour', 'Pigeon peas'], recipe: '1. Prepare chapati. 2. Cook pigeon peas stew. 3. Serve together.', healthScore: 5, culturalNote: 'Traditional plant protein meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 57, name: 'Chapati & Beef Stew', description: 'Chapati served with beef stew', budget: 200, category: 'Dinner', ingredients: ['Wheat flour', 'Beef'], recipe: '1. Prepare chapati. 2. Cook beef stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Popular town and home meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 58, name: 'Chapati & Beans', description: 'Chapati served with beans stew', budget: 150, category: 'Lunch', ingredients: ['Wheat flour', 'Beans', 'Onion', 'Tomato'], recipe: '1. Prepare chapati dough with flour, water, and oil. 2. Roll and cook on hot pan. 3. Boil beans with onions and tomatoes. 4. Serve together.', healthScore: 5, culturalNote: 'One of the most common affordable meals in Kenyan households and hostels', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 59, name: 'Rice & Pigeon Peas', description: 'Rice served with pigeon peas stew', budget: 160, category: 'Lunch', ingredients: ['Rice', 'Pigeon peas', 'Onion', 'Tomato'], recipe: '1. Cook rice. 2. Boil pigeon peas. 3. Fry with onions and tomatoes. 4. Serve together.', healthScore: 5, culturalNote: 'Very common in eastern Kenya and dry regions', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 60, name: 'Chapati & Pigeon Peas', description: 'Chapati served with pigeon peas stew', budget: 160, category: 'Lunch', ingredients: ['Wheat flour', 'Pigeon peas', 'Onion', 'Tomato'], recipe: '1. Prepare chapati. 2. Cook pigeon peas with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Traditional plant-protein meal often cooked at home', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-  { id: 61, name: 'Chapati & Beef', description: 'Chapati served with beef stew', budget: 200, category: 'Lunch', ingredients: ['Wheat flour', 'Beef', 'Onion', 'Tomato'], recipe: '1. Prepare chapati. 2. Cook beef stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'A popular town and home meal especially on weekends', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true }
-];
-  
+    { id: 1, name: 'Millet / Uji Porridge', description: 'Traditional millet breakfast porridge', budget: 70, category: 'Breakfast', ingredients: ['Millet flour', 'Water', 'Optional milk'], recipe: '1. Boil water in a pot. 2. Mix millet flour with cold water to form a smooth paste. 3. Pour the paste into boiling water while stirring continuously. 4. Cook for 10-15 minutes while stirring. 5. Add milk if desired. 6. Serve hot.', healthScore: 5, culturalNote: 'Many Kenyans grew up taking uji before school or farm work', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 2, name: 'Boiled Sweet Potatoes & Eggs', description: 'Boiled sweet potatoes with eggs', budget: 90, category: 'Breakfast', ingredients: ['Sweet potatoes', 'Eggs', 'Salt'], recipe: '1. Peel and wash sweet potatoes. 2. Boil sweet potatoes in salted water until tender (20-30 minutes). 3. In a separate pot, boil eggs for 10 minutes. 4. Drain and serve together.', healthScore: 5, culturalNote: 'A common student and bedsitter breakfast', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 3, name: 'Boiled Maize & Greens', description: 'Boiled maize served with greens', budget: 80, category: 'Breakfast', ingredients: ['Dry maize', 'Sukuma wiki', 'Salt'], recipe: '1. Soak dry maize overnight. 2. Boil maize until tender (1-2 hours). 3. Wash and chop sukuma wiki. 4. Sauté greens with salt. 5. Serve maize with greens on the side.', healthScore: 4, culturalNote: 'Often sold early morning by roadside vendors', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 4, name: 'Vegetable Omelette', description: 'Egg omelette with vegetables', budget: 110, category: 'Breakfast', ingredients: ['Eggs', 'Onion', 'Tomato', 'Spinach', 'Cooking oil'], recipe: '1. Chop onion, tomato, and spinach finely. 2. Beat eggs in a bowl with salt. 3. Heat oil in a pan. 4. Add vegetables and sauté for 2 minutes. 5. Pour in beaten eggs. 6. Cook until set, flip and cook other side. 7. Serve hot.', healthScore: 5, culturalNote: 'A quick filling breakfast when time is limited', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 5, name: 'Mandazi & Milk', description: 'Fried dough served with milk', budget: 80, category: 'Breakfast', ingredients: ['Wheat flour', 'Sugar', 'Cooking oil', 'Milk'], recipe: '1. Mix flour, sugar, and a pinch of salt. 2. Add water gradually to form dough. 3. Let dough rest for 30 minutes. 4. Roll out and cut into triangles. 5. Heat oil and deep fry until golden brown. 6. Serve with warm milk.', healthScore: 2, culturalNote: 'Classic chai and mandazi combo especially on weekends', veg: false, leg: false, protein: false, lowSugar: false, lowSalt: false, moderateFats: true },
+    { id: 6, name: 'Fruit Salad', description: 'Fresh mixed seasonal fruits', budget: 100, category: 'Breakfast', ingredients: ['Mango', 'Banana', 'Pawpaw', 'Orange'], recipe: '1. Wash all fruits thoroughly. 2. Peel and dice mango, banana, and pawpaw. 3. Peel and segment orange. 4. Mix all fruits in a bowl. 5. Chill and serve.', healthScore: 5, culturalNote: 'Common in urban homes and juice kiosks', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 7, name: 'Tea & Whole Grain Toast', description: 'Tea served with whole grain toast', budget: 60, category: 'Breakfast', ingredients: ['Tea leaves', 'Water', 'Milk', 'Whole grain bread'], recipe: '1. Boil water with tea leaves. 2. Add milk and simmer for 2 minutes. 3. Strain tea. 4. Toast bread until golden. 5. Serve together.', healthScore: 4, culturalNote: 'The most normal weekday breakfast in Kenyan homes', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 8, name: 'Egg Sandwich', description: 'Whole grain sandwich with eggs', budget: 110, category: 'Breakfast', ingredients: ['Whole grain bread', 'Eggs', 'Tomato'], recipe: '1. Boil or fry eggs. 2. Slice tomato thinly. 3. Toast bread. 4. Place egg and tomato between bread slices. 5. Cut and serve.', healthScore: 5, culturalNote: 'Popular with people rushing to work or class', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 9, name: 'Sweet Potato & Eggs', description: 'Boiled sweet potato with eggs', budget: 90, category: 'Breakfast', ingredients: ['Sweet potatoes', 'Eggs', 'Salt'], recipe: '1. Peel and wash sweet potatoes. 2. Boil sweet potatoes in salted water until tender. 3. In a separate pot, boil eggs for 10 minutes. 4. Drain and serve together.', healthScore: 5, culturalNote: 'Affordable and filling upcountry breakfast', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 10, name: 'Mandazi & Tea', description: 'Mandazi served with tea', budget: 70, category: 'Breakfast', ingredients: ['Wheat flour', 'Sugar', 'Cooking oil', 'Tea leaves', 'Milk'], recipe: '1. Prepare mandazi as described earlier. 2. Boil tea with milk. 3. Serve mandazi with hot tea.', healthScore: 2, culturalNote: 'Common kiosk breakfast combo', veg: false, leg: false, protein: false, lowSugar: false, lowSalt: false, moderateFats: true },
+    { id: 11, name: 'Fruit Smoothie', description: 'Blended fruits with milk', budget: 100, category: 'Breakfast', ingredients: ['Banana', 'Mango', 'Milk'], recipe: '1. Peel and chop banana and mango. 2. Blend with milk until smooth. 3. Add ice if desired. 4. Serve immediately.', healthScore: 4, culturalNote: 'Popular with gym-goers and young professionals', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 12, name: 'Arrow Roots & Tea', description: 'Boiled arrow roots with tea', budget: 70, category: 'Breakfast', ingredients: ['Arrow roots', 'Tea leaves', 'Milk'], recipe: '1. Wash and peel arrow roots. 2. Boil until tender (30-40 minutes). 3. Prepare tea with milk. 4. Serve together.', healthScore: 4, culturalNote: 'Very traditional breakfast in many Kenyan homes', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 13, name: 'Boiled Cassava & Tea', description: 'Boiled cassava served with tea', budget: 70, category: 'Breakfast', ingredients: ['Cassava', 'Tea leaves', 'Milk'], recipe: '1. Peel and wash cassava. 2. Boil in salted water until tender (30-40 minutes). 3. Prepare milk tea. 4. Serve together.', healthScore: 4, culturalNote: 'Common in coastal and western Kenya', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 14, name: 'Boiled Arrow Roots & Eggs', description: 'Arrow roots with boiled eggs', budget: 100, category: 'Breakfast', ingredients: ['Arrow roots', 'Eggs', 'Salt'], recipe: '1. Wash and peel arrow roots. 2. Boil until tender. 3. In a separate pot, boil eggs for 10 minutes. 4. Serve together.', healthScore: 5, culturalNote: 'A strong breakfast often taken by farmers', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 15, name: 'Bread & Avocado', description: 'Bread served with avocado', budget: 80, category: 'Breakfast', ingredients: ['Bread', 'Avocado'], recipe: '1. Slice bread. 2. Cut avocado in half, remove seed. 3. Scoop avocado and mash with salt. 4. Spread on bread. 5. Serve.', healthScore: 4, culturalNote: 'Very popular when avocado is in season', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 16, name: 'Boiled Eggs & Avocado', description: 'Boiled eggs served with avocado', budget: 90, category: 'Breakfast', ingredients: ['Eggs', 'Avocado'], recipe: '1. Boil eggs for 10 minutes. 2. Peel eggs. 3. Cut avocado in half. 4. Serve together with salt.', healthScore: 5, culturalNote: 'Simple protein plus healthy mafuta good fats', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 17, name: 'Ugali & Sukuma Wiki', description: 'Ugali served with collard greens', budget: 120, category: 'Lunch', ingredients: ['Maize flour', 'Sukuma wiki', 'Cooking oil'], recipe: '1. Boil water in a sufuria. 2. Add maize flour gradually while stirring to avoid lumps. 3. Cook for 10 minutes, stirring constantly. 4. Wash and chop sukuma wiki. 5. Sauté with onions and tomatoes. 6. Serve ugali with sukuma.', healthScore: 5, culturalNote: 'If you say Kenyan food this is usually the first thing people think of', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 18, name: 'Githeri (Maize & Beans)', description: 'Boiled maize and beans', budget: 130, category: 'Lunch', ingredients: ['Maize', 'Beans', 'Salt'], recipe: '1. Soak maize and beans overnight. 2. Boil together until tender (2-3 hours). 3. Add salt to taste. 4. Can add onions and tomatoes for flavor. 5. Serve hot.', healthScore: 5, culturalNote: 'Very common in central Kenya and school menus', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 19, name: 'Grilled Fish with Vegetables', description: 'Grilled fish served with vegetables', budget: 250, category: 'Lunch', ingredients: ['Fish', 'Cabbage', 'Carrots'], recipe: '1. Clean and season fish with salt and lemon. 2. Grill fish until cooked through. 3. Chop cabbage and carrots. 4. Boil vegetables until tender. 5. Serve fish with vegetables.', healthScore: 5, culturalNote: 'Common lakeside meal especially around Kisumu', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 20, name: 'Chapati with Vegetable Curry', description: 'Chapati served with vegetable curry', budget: 140, category: 'Lunch', ingredients: ['Wheat flour', 'Mixed vegetables', 'Spices'], recipe: '1. Make chapati dough with flour, water, and oil. 2. Roll out and cook on hot pan. 3. Cook mixed vegetables with curry spices. 4. Serve chapati with curry.', healthScore: 5, culturalNote: 'Often cooked on weekends or special days', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 21, name: 'Ndengu Stew & Rice', description: 'Green grams served with rice', budget: 180, category: 'Lunch', ingredients: ['Ndengu', 'Rice', 'Onion', 'Tomato'], recipe: '1. Boil ndengu until tender. 2. Cook rice separately. 3. Fry onions and tomatoes. 4. Add boiled ndengu to tomato mixture. 5. Serve with rice.', healthScore: 5, culturalNote: 'Very common nyumba ya kupanga lunch', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 22, name: 'Tilapia & Ugali', description: 'Grilled tilapia served with ugali', budget: 250, category: 'Dinner', ingredients: ['Tilapia', 'Maize flour'], recipe: '1. Clean and season tilapia. 2. Grill or fry fish. 3. Prepare ugali as usual. 4. Serve together with kachumbari.', healthScore: 5, culturalNote: 'A favourite around Lake Victoria', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 23, name: 'Ndengu Chapati', description: 'Green grams served with chapati', budget: 150, category: 'Lunch', ingredients: ['Ndengu', 'Wheat flour'], recipe: '1. Boil ndengu with onions and tomatoes. 2. Prepare chapati dough. 3. Roll and cook chapati. 4. Serve ndengu with chapati.', healthScore: 5, culturalNote: 'Popular among students and bachelors', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 24, name: 'Vegetable Stew with Rice', description: 'Mixed vegetable stew with rice', budget: 140, category: 'Dinner', ingredients: ['Rice', 'Carrots', 'Spinach', 'Tomato'], recipe: '1. Cook rice. 2. Dice carrots and chop spinach. 3. Fry vegetables with tomatoes. 4. Simmer until tender. 5. Serve with rice.', healthScore: 5, culturalNote: 'Healthy everyday nyumba ya kupanga meal', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 25, name: 'Omena Stew & Ugali', description: 'Omena stew served with ugali', budget: 220, category: 'Dinner', ingredients: ['Omena', 'Tomato', 'Onion', 'Maize flour'], recipe: '1. Clean omena thoroughly. 2. Fry with onions and tomatoes. 3. Add water and simmer. 4. Prepare ugali. 5. Serve together.', healthScore: 5, culturalNote: 'Cheap but powerful protein in western Kenya', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 26, name: 'Chicken & Vegetable Curry', description: 'Chicken cooked with vegetables', budget: 220, category: 'Dinner', ingredients: ['Chicken', 'Carrots', 'Peas', 'Spices'], recipe: '1. Cut chicken into pieces. 2. Fry chicken until browned. 3. Add vegetables and curry spices. 4. Simmer until cooked. 5. Serve with rice or chapati.', healthScore: 5, culturalNote: 'Home-style curry often cooked on Sundays', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 27, name: 'Brown Rice & Beans', description: 'Brown rice with beans', budget: 180, category: 'Lunch', ingredients: ['Brown rice', 'Beans'], recipe: '1. Soak beans overnight. 2. Boil beans until tender. 3. Cook brown rice separately. 4. Serve together.', healthScore: 5, culturalNote: 'Chosen by people trying to eat healthier', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 28, name: 'Ugali & Cabbage Stew', description: 'Ugali served with cabbage stew', budget: 120, category: 'Dinner', ingredients: ['Maize flour', 'Cabbage'], recipe: '1. Prepare ugali. 2. Chop cabbage. 3. Fry with onions and tomatoes. 4. Serve with ugali.', healthScore: 4, culturalNote: 'Budget-friendly end-month meal', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 29, name: 'Matoke & Beef Stew', description: 'Matoke served with beef stew', budget: 220, category: 'Dinner', ingredients: ['Matoke', 'Beef', 'Spices'], recipe: '1. Peel and boil matoke. 2. Cook beef with onions and tomatoes. 3. Add spices and simmer. 4. Serve together.', healthScore: 5, culturalNote: 'Common in western Kenya homes', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 30, name: 'Matoke & Chicken Stew', description: 'Matoke served with chicken stew', budget: 220, category: 'Dinner', ingredients: ['Matoke', 'Chicken'], recipe: '1. Peel and boil matoke. 2. Cook chicken with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Seen as a healthier matoke option', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 31, name: 'Rice & Mixed Legume Stew', description: 'Rice served with mixed legumes', budget: 180, category: 'Lunch', ingredients: ['Rice', 'Lentils', 'Beans'], recipe: '1. Cook rice. 2. Boil mixed legumes. 3. Add tomatoes and onions. 4. Serve with rice.', healthScore: 5, culturalNote: 'Affordable plant protein meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 32, name: 'Chicken Stew & Ugali', description: 'Chicken stew with ugali', budget: 200, category: 'Dinner', ingredients: ['Chicken', 'Maize flour'], recipe: '1. Cook chicken with tomatoes and onions. 2. Prepare ugali. 3. Serve together.', healthScore: 5, culturalNote: 'Classic Sunday lunch meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 33, name: 'Ugali & Beef Stew', description: 'Ugali served with beef stew', budget: 200, category: 'Dinner', ingredients: ['Maize flour', 'Beef'], recipe: '1. Cook beef stew with tomatoes. 2. Prepare ugali. 3. Serve together.', healthScore: 5, culturalNote: 'Very common across Kenyan households', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 34, name: 'Rice & Cabbage Stew', description: 'Rice served with cabbage stew', budget: 130, category: 'Lunch', ingredients: ['Rice', 'Cabbage'], recipe: '1. Cook rice. 2. Prepare cabbage stew. 3. Serve together.', healthScore: 4, culturalNote: 'Simple healthy meal when money is tight', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 35, name: 'Ugali & Spinach Stew', description: 'Ugali served with spinach', budget: 120, category: 'Dinner', ingredients: ['Maize flour', 'Spinach'], recipe: '1. Prepare ugali. 2. Cook spinach with onions. 3. Serve together.', healthScore: 5, culturalNote: 'Common when sukuma is replaced with spinach', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 36, name: 'Pumpkin Leaves (Seveve) & Ugali', description: 'Ugali with pumpkin leaves', budget: 120, category: 'Dinner', ingredients: ['Maize flour', 'Pumpkin leaves'], recipe: '1. Prepare ugali. 2. Cook pumpkin leaves with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'A delicacy in western Kenya homes', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 37, name: 'Ugali & Cowpea Leaves', description: 'Ugali with cowpea leaves', budget: 120, category: 'Dinner', ingredients: ['Maize flour', 'Cowpea leaves'], recipe: '1. Prepare ugali. 2. Cook cowpea leaves. 3. Serve together.', healthScore: 5, culturalNote: 'Often cooked during rainy seasons', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 38, name: 'Rice & Fish Stew', description: 'Rice served with fish stew', budget: 220, category: 'Dinner', ingredients: ['Rice', 'Fish', 'Tomato'], recipe: '1. Cook rice. 2. Prepare fish stew. 3. Serve together.', healthScore: 5, culturalNote: 'Common in coastal and lakeside towns', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 39, name: 'Mukimo', description: 'Mashed potatoes with maize and greens', budget: 150, category: 'Dinner', ingredients: ['Potatoes', 'Maize', 'Greens'], recipe: '1. Boil potatoes, maize, and greens. 2. Mash together. 3. Serve hot.', healthScore: 5, culturalNote: 'Traditional food from central Kenya', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 40, name: 'Ugali & Goat Stew', description: 'Ugali served with goat meat stew', budget: 250, category: 'Dinner', ingredients: ['Maize flour', 'Goat meat'], recipe: '1. Cook goat meat until tender. 2. Prepare ugali. 3. Serve together.', healthScore: 5, culturalNote: 'Mostly cooked for guests or ceremonies', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 41, name: 'Rice & Chicken Stew', description: 'Rice served with chicken stew', budget: 200, category: 'Dinner', ingredients: ['Rice', 'Chicken'], recipe: '1. Cook rice. 2. Prepare chicken stew. 3. Serve together.', healthScore: 5, culturalNote: 'Family meal often cooked on special days', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 42, name: 'Ugali & Vegetable Curry', description: 'Ugali with mixed vegetable curry', budget: 130, category: 'Dinner', ingredients: ['Maize flour', 'Vegetables'], recipe: '1. Prepare ugali. 2. Cook mixed vegetables with curry spices. 3. Serve together.', healthScore: 5, culturalNote: 'Vegetarian option gaining popularity', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 43, name: 'Rice & Beef Stew', description: 'Rice served with beef stew', budget: 200, category: 'Dinner', ingredients: ['Rice', 'Beef'], recipe: '1. Cook rice. 2. Prepare beef stew. 3. Serve together.', healthScore: 5, culturalNote: 'Common lunch in town hotels', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 44, name: 'Ugali & Liver Stew', description: 'Ugali with liver stew', budget: 180, category: 'Dinner', ingredients: ['Maize flour', 'Liver'], recipe: '1. Prepare ugali. 2. Cook liver stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Known for boosting iron levels', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 45, name: 'Rice & Liver Stew', description: 'Rice served with liver stew', budget: 180, category: 'Dinner', ingredients: ['Rice', 'Liver'], recipe: '1. Cook rice. 2. Prepare liver stew. 3. Serve together.', healthScore: 5, culturalNote: 'Nutritious and filling meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 46, name: 'Rice & Beans', description: 'Rice served with beans', budget: 150, category: 'Lunch', ingredients: ['Rice', 'Beans'], recipe: '1. Cook rice and beans separately. 2. Serve together.', healthScore: 5, culturalNote: 'End-month lifesaver meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 47, name: 'Matumbo Stew & Ugali', description: 'Tripe stew served with ugali', budget: 180, category: 'Dinner', ingredients: ['Matumbo', 'Onion', 'Tomato', 'Maize flour'], recipe: '1. Clean matumbo thoroughly. 2. Boil until tender. 3. Fry with onions and tomatoes. 4. Prepare ugali. 5. Serve together.', healthScore: 4, culturalNote: 'Popular in local joints and markets', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 48, name: 'Matumbo Stew & Rice', description: 'Tripe stew served with rice', budget: 180, category: 'Dinner', ingredients: ['Matumbo', 'Rice'], recipe: '1. Clean matumbo thoroughly. 2. Boil until tender. 3. Fry with onions and tomatoes. 4. Cook rice. 5. Serve together.', healthScore: 4, culturalNote: 'Common street food lunch option', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 49, name: 'Rice & Minced Meat Stew', description: 'Rice with minced meat stew', budget: 180, category: 'Dinner', ingredients: ['Rice', 'Minced beef'], recipe: '1. Cook rice. 2. Prepare minced meat stew. 3. Serve together.', healthScore: 5, culturalNote: 'Easy to cook family meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 50, name: 'Ugali & Minced Meat Stew', description: 'Ugali with minced meat stew', budget: 180, category: 'Dinner', ingredients: ['Maize flour', 'Minced beef'], recipe: '1. Prepare ugali. 2. Cook minced meat stew. 3. Serve together.', healthScore: 5, culturalNote: 'Common quick supper meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 51, name: 'Spaghetti & Minced Meat Stew', description: 'Spaghetti served with minced meat', budget: 200, category: 'Dinner', ingredients: ['Spaghetti', 'Minced beef'], recipe: '1. Cook spaghetti according to package instructions. 2. Prepare minced meat stew. 3. Serve together.', healthScore: 3, culturalNote: 'Urban fusion dish especially for kids', veg: false, leg: false, protein: true, lowSugar: false, lowSalt: true, moderateFats: true },
+    { id: 52, name: 'Ugali & Peas Stew', description: 'Ugali served with peas stew', budget: 140, category: 'Dinner', ingredients: ['Maize flour', 'Peas'], recipe: '1. Prepare ugali. 2. Cook peas stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Plant protein option in many homes', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 53, name: 'Grilled Chicken & Rice', description: 'Grilled chicken served with rice', budget: 220, category: 'Dinner', ingredients: ['Chicken', 'Rice'], recipe: '1. Season and grill chicken. 2. Cook rice. 3. Serve together.', healthScore: 5, culturalNote: 'Balanced protein meal from eateries', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 54, name: 'Chapati & Beans Stew', description: 'Chapati served with beans stew', budget: 150, category: 'Lunch', ingredients: ['Wheat flour', 'Beans'], recipe: '1. Prepare chapati. 2. Cook beans stew. 3. Serve together.', healthScore: 5, culturalNote: 'Student-friendly and affordable meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 55, name: 'Rice & Kamande', description: 'Rice served with pigeon peas', budget: 160, category: 'Dinner', ingredients: ['Rice', 'Pigeon peas'], recipe: '1. Cook rice. 2. Boil pigeon peas with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Common in eastern and dry regions', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 56, name: 'Chapati & Kamande', description: 'Chapati served with pigeon peas', budget: 160, category: 'Dinner', ingredients: ['Wheat flour', 'Pigeon peas'], recipe: '1. Prepare chapati. 2. Cook pigeon peas stew. 3. Serve together.', healthScore: 5, culturalNote: 'Traditional plant protein meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 57, name: 'Chapati & Beef Stew', description: 'Chapati served with beef stew', budget: 200, category: 'Dinner', ingredients: ['Wheat flour', 'Beef'], recipe: '1. Prepare chapati. 2. Cook beef stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Popular town and home meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 58, name: 'Chapati & Beans', description: 'Chapati served with beans stew', budget: 150, category: 'Lunch', ingredients: ['Wheat flour', 'Beans', 'Onion', 'Tomato'], recipe: '1. Prepare chapati dough with flour, water, and oil. 2. Roll and cook on hot pan. 3. Boil beans with onions and tomatoes. 4. Serve together.', healthScore: 5, culturalNote: 'One of the most common affordable meals in Kenyan households and hostels', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 59, name: 'Rice & Pigeon Peas', description: 'Rice served with pigeon peas stew', budget: 160, category: 'Lunch', ingredients: ['Rice', 'Pigeon peas', 'Onion', 'Tomato'], recipe: '1. Cook rice. 2. Boil pigeon peas. 3. Fry with onions and tomatoes. 4. Serve together.', healthScore: 5, culturalNote: 'Very common in eastern Kenya and dry regions', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 60, name: 'Chapati & Pigeon Peas', description: 'Chapati served with pigeon peas stew', budget: 160, category: 'Lunch', ingredients: ['Wheat flour', 'Pigeon peas', 'Onion', 'Tomato'], recipe: '1. Prepare chapati. 2. Cook pigeon peas with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Traditional plant-protein meal often cooked at home', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 61, name: 'Chapati & Beef', description: 'Chapati served with beef stew', budget: 200, category: 'Lunch', ingredients: ['Wheat flour', 'Beef', 'Onion', 'Tomato'], recipe: '1. Prepare chapati. 2. Cook beef stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'A popular town and home meal especially on weekends', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true }
+  ];
+
   const [allMeals, setAllMeals] = useState(mealsData);
   const [selectedMeal, setSelectedMeal] = useState(null);
   const [budget, setBudget] = useState(5000);
@@ -1245,42 +1408,42 @@ useEffect(() => {
   const [mealHistory, setMealHistory] = useState([]);
   const [showRepeatNotification, setShowRepeatNotification] = useState(false);
   const [suggestedAlternatives, setSuggestedAlternatives] = useState([]);
-  
+
   const filteredMeals = allMeals.filter(meal => {
-  const withinBudget = meal.budget <= maxMealBudget;
-  const matchesCategory = selectedCategory === 'All' || meal.category === selectedCategory;
-  
-  // Search filter
-  const matchesSearch = searchQuery === '' || 
-    meal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    meal.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    meal.ingredients.some(ing => ing.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (meal.culturalNote && meal.culturalNote.toLowerCase().includes(searchQuery.toLowerCase()));
-  
-  return withinBudget && matchesCategory && matchesSearch;
-});
-  
+    const withinBudget = meal.budget <= maxMealBudget;
+    const matchesCategory = selectedCategory === 'All' || meal.category === selectedCategory;
+
+    // Search filter
+    const matchesSearch = searchQuery === '' ||
+      meal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      meal.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      meal.ingredients.some(ing => ing.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (meal.culturalNote && meal.culturalNote.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    return withinBudget && matchesCategory && matchesSearch;
+  });
+
   const [friends, setFriends] = useState(() => {
     const stored = localStorage.getItem('friends');
     return stored ? JSON.parse(stored) : [];
   });
-  
+
   const [friendRequests, setFriendRequests] = useState(() => {
     const stored = localStorage.getItem('friendRequests');
     return stored ? JSON.parse(stored) : [];
   });
-  
+
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [searchUsername, setSearchUsername] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedFriendsForMeal, setSelectedFriendsForMeal] = useState([]);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
-const [showTermsModal, setShowTermsModal] = useState(false);
-const [termsText, setTermsText] = useState('');
-const [policyText, setPolicyText] = useState('');
-const [checkingTerms, setCheckingTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsText, setTermsText] = useState('');
+  const [policyText, setPolicyText] = useState('');
+  const [checkingTerms, setCheckingTerms] = useState(true);
 
-   React.useEffect(() => {
+  React.useEffect(() => {
     localStorage.setItem('friendRequests', JSON.stringify(friendRequests));
   }, [friendRequests]);
   React.useEffect(() => {
@@ -1288,1195 +1451,1186 @@ const [checkingTerms, setCheckingTerms] = useState(false);
   }, [friends]);
 
   // Load meal history on component mount
-React.useEffect(() => {
-  const loadMealHistory = async () => {
-    if (user?.email) {
-      try {
-        const result = await window.storage.get(`meal_history_${user.email}`);
-        if (result) {
-          setMealHistory(JSON.parse(result.value));
+  React.useEffect(() => {
+    const loadMealHistory = async () => {
+      if (user?.email) {
+        try {
+          const result = await window.storage.get(`meal_history_${user.email}`);
+          if (result) {
+            setMealHistory(JSON.parse(result.value));
+          }
+        } catch (error) {
+          console.log('No meal history found');
+          setMealHistory([]);
         }
-      } catch (error) {
-        console.log('No meal history found');
-        setMealHistory([]);
       }
-    }
-  };
-  loadMealHistory();
-}, [user]);
+    };
+    loadMealHistory();
+  }, [user]);
 
-// Save meal history when it changes
-React.useEffect(() => {
-  const saveMealHistory = async () => {
-    if (user?.email && mealHistory.length > 0) {
-      try {
-        await window.storage.set(`meal_history_${user.email}`, JSON.stringify(mealHistory));
-      } catch (error) {
-        console.error('Error saving meal history:', error);
-      }
-    }
-  };
-  saveMealHistory();
-}, [mealHistory, user]);
-
-const handleForgotPassword = async (email) => {
-  if (!email) {
-    alert("Please enter your email address first.");
-    return;
-  }
-
-  try {
-    // Get the current URL origin (works for localhost or deployed site)
-    const redirectTo = `${window.location.origin}/#type=recovery`;
-    
-    const url = `${supabaseUrl}/auth/v1/recover`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'apikey': supabaseAnonKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        email,
-        options: {
-          redirectTo: redirectTo // Add this to specify where to redirect
+  // Save meal history when it changes
+  React.useEffect(() => {
+    const saveMealHistory = async () => {
+      if (user?.email && mealHistory.length > 0) {
+        try {
+          await window.storage.set(`meal_history_${user.email}`, JSON.stringify(mealHistory));
+        } catch (error) {
+          console.error('Error saving meal history:', error);
         }
-      })
-    });
+      }
+    };
+    saveMealHistory();
+  }, [mealHistory, user]);
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.msg || error.message);
-    }
-
-    alert("Check your email! A password reset link has been sent.");
-  } catch (err) {
-    alert("Error: " + err.message);
-  }
-};
-
-   const handleUpdatePassword = async (newPassword) => {
-  if (!newPassword || newPassword.length < 6) {
-    alert("Password must be at least 15 characters");
-    return;
-  }
-
-  try {
-    // Extract the access token from the URL hash
-    const hash = window.location.hash;
-    const params = new URLSearchParams(hash.substring(1));
-    const accessToken = params.get('access_token');
-    
-    if (!accessToken) {
-      alert("Invalid or expired reset link. Please request a new one.");
+  const handleForgotPassword = async (email) => {
+    if (!email) {
+      alert("Please enter your email address first.");
       return;
     }
 
-    const url = `${supabaseUrl}/auth/v1/user`;
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${accessToken}`, // Use the token from URL
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ password: newPassword })
-    });
+    try {
+      // Get the current URL origin (works for localhost or deployed site)
+      const redirectTo = `${window.location.origin}/#type=recovery`;
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to update password");
-    }
-
-    alert("Password updated successfully! Please login with your new password.");
-    
-    // Clear the hash and redirect to login
-    window.location.hash = '';
-    setCurrentScreen('login');
-    
-  } catch (err) {
-    alert("Error: " + err.message);
-  }
-};
-
-const handleDeleteAccount = async () => {
-  if (!user?.id) {
-    alert("No user logged in");
-    return;
-  }
-
-  const confirmDelete = window.confirm(
-    "⚠️ WARNING: This will permanently delete your account and all data.\n\n" +
-    "This includes:\n" +
-    "• Your profile\n" +
-    "• All meal history\n" +
-    "• Friend connections\n" +
-    "• Streak data\n\n" +
-    "This action CANNOT be undone.\n\n" +
-    "Type 'DELETE' in the next prompt to confirm."
-  );
-
-  if (!confirmDelete) return;
-
-  const confirmText = window.prompt("Type DELETE to confirm account deletion:");
-  
-  if (confirmText !== "DELETE") {
-    alert("Account deletion cancelled");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    // 1. Record deletion in Supabase
-    await supabaseFetch('account_deletions', '', 'POST', {
-      user_id: user.id,
-      user_email: user.email,
-      username: user.username,
-      deleted_at: new Date().toISOString(),
-      reason: 'user_requested'
-    });
-
-    // 2. Delete user data from users table
-    await supabaseFetch('users', `?id=eq.${user.id}`, 'DELETE');
-
-    // 3. Delete from Supabase Auth
-    const hash = window.location.hash;
-    const params = new URLSearchParams(hash.substring(1));
-    const accessToken = params.get('access_token') || localStorage.getItem('supabase.auth.token');
-    
-    if (accessToken) {
-      await fetch(`${supabaseUrl}/auth/v1/user`, {
-        method: 'DELETE',
+      const url = `${supabaseUrl}/auth/v1/recover`;
+      const response = await fetch(url, {
+        method: 'POST',
         headers: {
           'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${accessToken}`
-        }
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          options: {
+            redirectTo: redirectTo // Add this to specify where to redirect
+          }
+        })
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.msg || error.message);
+      }
+
+      alert("Check your email! A password reset link has been sent.");
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  };
+
+  const handleUpdatePassword = async (newPassword) => {
+    if (!newPassword || newPassword.length < 6) {
+      alert("Password must be at least 15 characters");
+      return;
     }
 
-    // 4. Clear local storage
-    localStorage.removeItem('dishiUser');
-    localStorage.removeItem('friends');
-    localStorage.removeItem('friendRequests');
+    try {
+      // Extract the access token from the URL hash
+      const hash = window.location.hash;
+      const params = new URLSearchParams(hash.substring(1));
+      const accessToken = params.get('access_token');
 
-    // 5. Reset app state
-    setUser(null);
-    setIsLoggedIn(false);
-    setFriends([]);
-    setFriendRequests([]);
-    
-    alert("Your account has been permanently deleted. We're sorry to see you go!");
-    setCurrentScreen('home');
+      if (!accessToken) {
+        alert("Invalid or expired reset link. Please request a new one.");
+        return;
+      }
 
-  } catch (error) {
-    console.error("Delete account error:", error);
-    alert("Failed to delete account: " + error.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      const url = `${supabaseUrl}/auth/v1/user`;
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${accessToken}`, // Use the token from URL
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password: newPassword })
+      });
 
-const checkTermsAcceptance = async (userId) => {
-  if (!userId) return;
-  
-  setCheckingTerms(true);
-  try {
-    const query = `?id=eq.${userId}&select=terms_accepted,terms_accepted_at`;
-    const data = await supabaseFetch('users', query);
-    
-    console.log("📋 Terms acceptance check:", data);
-    
-    if (data && data[0]) {
-      const accepted = data[0].terms_accepted || false;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update password");
+      }
+
+      alert("Password updated successfully! Please login with your new password.");
+
+      // Clear the hash and redirect to login
+      window.location.hash = '';
+      setCurrentScreen('login');
+
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user?.id) {
+      alert("No user logged in");
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      "⚠️ WARNING: This will permanently delete your account and all data.\n\n" +
+      "This includes:\n" +
+      "• Your profile\n" +
+      "• All meal history\n" +
+      "• Friend connections\n" +
+      "• Streak data\n\n" +
+      "This action CANNOT be undone.\n\n" +
+      "Type 'DELETE' in the next prompt to confirm."
+    );
+
+    if (!confirmDelete) return;
+
+    const confirmText = window.prompt("Type DELETE to confirm account deletion:");
+
+    if (confirmText !== "DELETE") {
+      alert("Account deletion cancelled");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // 1. Record deletion in Supabase
+      await supabaseFetch('account_deletions', '', 'POST', {
+        user_id: user.id,
+        user_email: user.email,
+        username: user.username,
+        deleted_at: new Date().toISOString(),
+        reason: 'user_requested'
+      });
+
+      // 2. Delete user data from users table
+      await supabaseFetch('users', `?id=eq.${user.id}`, 'DELETE');
+
+      // 3. Delete from Supabase Auth
+      const hash = window.location.hash;
+      const params = new URLSearchParams(hash.substring(1));
+      const accessToken = params.get('access_token') || localStorage.getItem('supabase.auth.token');
+
+      if (accessToken) {
+        await fetch(`${supabaseUrl}/auth/v1/user`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': supabaseAnonKey,
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+      }
+
+      // 4. Clear local storage
+      localStorage.removeItem('dishiUser');
+      localStorage.removeItem('friends');
+      localStorage.removeItem('friendRequests');
+
+      // 5. Reset app state
+      setUser(null);
+      setIsLoggedIn(false);
+      setFriends([]);
+      setFriendRequests([]);
+
+      alert("Your account has been permanently deleted. We're sorry to see you go!");
+      setCurrentScreen('home');
+
+    } catch (error) {
+      console.error("Delete account error:", error);
+      alert("Failed to delete account: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkTermsAcceptance = async (userId) => {
+    if (!userId) return;
+    try {
+      // 1. Use the authenticated supabase client
+      const { data, error } = await supabase
+        .from('terms_acceptances')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error("Terms check failed:", error);
+        return;
+      }
+
+      // 2. If data has length, they have accepted in the past
+      const accepted = data && data.length > 0;
+
+      console.log("Terms accepted check:", accepted); // Verify this says 'true' in console
+
       setHasAcceptedTerms(accepted);
-      
-      // Show modal if not accepted
+
+      // 3. Only show modal if accepted is false
       if (!accepted) {
-        console.log("⚠️ Terms not accepted, showing modal");
         setShowTermsModal(true);
       } else {
-        console.log("✅ Terms already accepted on:", data[0].terms_accepted_at);
+        setShowTermsModal(false);
       }
+    } catch (err) {
+      console.error("Terms check crashed:", err);
     }
-  } catch (error) {
-    console.error("❌ Error checking terms:", error);
-    // On error, assume not accepted for safety
-    setHasAcceptedTerms(false);
-    setShowTermsModal(true);
-  } finally {
-    setCheckingTerms(false);
-  }
-};
+  };
 
-const handleAcceptTerms = async () => {
-  if (!user?.id) return;
+  const handleAcceptTerms = async () => {
+    console.log("Button Clicked: Starting DB Update..."); // Add this to verify the click works
+    if (!user?.id) return;
 
-  try {
-    console.log("✍️ Recording terms acceptance for user:", user.id);
+    try {
+      // Use authenticated client to insert
+      const { data, error } = await supabase
+        .from('terms_acceptances')
+        .insert([
+          {
+            user_id: user.id,
+            accepted: true,
+            terms_version: '1.0'
+          }
+        ])
+        .select();
 
-    // 1. Record in audit table
-    const acceptanceRecord = await supabaseFetch('terms_acceptances', '', 'POST', {
-      user_id: user.id,
-      user_email: user.email,
-      accepted_at: new Date().toISOString(),
-      terms_version: '1.0',
-      ip_address: 'client_side'
+      if (error) {
+        console.error("DB Update Failed:", error);
+        alert("Failed to accept terms: " + error.message);
+        return;
+      }
+
+      if (data) {
+        console.log("DB Update Success:", data);
+        setHasAcceptedTerms(true);
+        setShowTermsModal(false);
+      }
+    } catch (error) {
+      console.error("DB Update Crashed:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    checkTermsAcceptance(user.id);
+  }, [user?.id]);
+
+  const ResetPasswordScreen = () => {
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false); // NEW
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false); // NEW
+
+    const handleSubmit = () => {
+      if (!newPassword || newPassword.length < 6) {
+        alert("Password must be at least 6 characters");
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        alert("Passwords don't match!");
+        return;
+      }
+
+      handleUpdatePassword(newPassword);
+    };
+
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-orange-50 to-pink-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+          <div className="text-center mb-6">
+            <div className="text-5xl mb-4">🔐</div>
+            <h2 className="text-2xl font-bold text-gray-800">Set New Password</h2>
+            <p className="text-sm text-gray-600 mt-2">Choose a strong password for your account</p>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              New Password
+            </label>
+            {/* NEW: Password with visibility toggle */}
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter new password (min 6 characters)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <span className="text-xl">👁️</span> : <span className="text-xl">🙈</span>}
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Confirm Password
+            </label>
+            {/* NEW: Confirm password with visibility toggle */}
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Re-enter your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showConfirmPassword ? <span className="text-xl">👁️</span> : <span className="text-xl">🙈</span>}
+              </button>
+            </div>
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
+          >
+            Update Password
+          </button>
+
+          <button
+            onClick={() => setCurrentScreen('login')}
+            className="w-full mt-3 text-gray-600 hover:text-gray-800 text-sm font-medium"
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const handleLogin = async (email, password) => {
+    setLoading(true);
+    try {
+      // Use the GLOBAL supabase client defined at the top
+      // This ensures the session persists for subsequent calls
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
+
+      if (error) throw error;
+
+      if (data?.user) {
+        // 1. Point to 'users' instead of 'profiles'
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError) console.error("Profile error:", profileError);
+
+        const userData = {
+          id: data.user.id,
+          email: data.user.email,
+          username: profile?.username || data.user.email,
+          name: profile?.full_name || 'Dishi Member'
+        };
+
+        // 1. Save to Storage FIRST so it's available on refresh
+        localStorage.setItem('dishiUser', JSON.stringify(userData));
+
+        // 2. Update States
+        setUser(userData);
+        setIsLoggedIn(true);
+
+        // 3. THIS FIXES THE BLANK MIDDLE: Force the view to 'home' immediately
+        setCurrentScreen('suggestions'); // Use 'suggestions' or whatever you want the home screen to be
+
+        // 4. Trigger data fetch immediately using the data we just got
+        // (Bypasses the delay of waiting for the 'user' state to refresh)
+        await fetchFriendRequests(data.user.id);
+        await fetchFriends(data.user.id);
+        // ✅ CHECK TERMS ACCEPTANCE AFTER LOGIN
+        await checkTermsAcceptance(data.user.id);
+      }
+    } catch (error) {
+      console.error("Login detail error:", error);
+      alert("Login failed: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderContent = () => {
+    // If not logged in, the main logic should handle the Login/Signup screen
+    if (!isLoggedIn) return null;
+
+    switch (currentScreen) {
+      case 'home':
+        return (
+          <div className="p-4">
+            <h2 className="text-xl font-bold mb-4">Welcome back, {user?.name}!</h2>
+            {/* Add your Dashboard/Main content here */}
+            <div className="bg-orange-50 p-6 rounded-2xl border-2 border-orange-100">
+              <p className="text-orange-800">Select a meal to get started with your streak!</p>
+            </div>
+          </div>
+        );
+      case 'planner':
+        return <div className="p-4"><h3>Meal Planner Screen</h3></div>;
+      case 'friends':
+        // This is where your Friend Request UI from earlier goes
+        return <FriendsScreen
+          user={user}
+          friends={friends}
+          friendRequests={friendRequests}
+          handleFriendRequest={handleFriendRequest} // Pass the handler
+          sendFriendRequest={sendFriendRequest}     // Pass the handler
+          removeFriend={removeFriend}               // Pass the handler
+          searchUsers={searchUsers}                 // Pass the handler
+          searchUsername={searchUsername}           // Pass value
+          setSearchUsername={setSearchUsername}     // Pass setter
+          searchResults={searchResults}             // Pass results
+          showAddFriend={showAddFriend}             // Pass toggle
+          setShowAddFriend={setShowAddFriend}       // Pass setter
+        />;
+      case 'profile':
+        return <ProfileScreen
+          user={user}
+          handleDeleteAccount={handleDeleteAccount}
+          setShowTermsModal={setShowTermsModal}
+          setTermsText={setTermsText}
+          TERMS_OF_SERVICE={TERMS_OF_SERVICE}
+          PRIVACY_POLICY={PRIVACY_POLICY}
+          notificationsEnabled={notificationsEnabled}
+          toggleNotifications={handleNotificationToggle}
+        />;
+      default:
+        return <div className="p-4"><h3>Home Screen</h3></div>;
+    }
+  };
+
+  const findSimilarMeals = (meal) => {
+    // Find meals that are similar but not the same
+    const similar = allMeals.filter(m => {
+      if (m.id === meal.id) return false;
+
+      // Calculate similarity score
+      let score = 0;
+
+      // Same category
+      if (m.category === meal.category) score += 3;
+
+      // Similar budget (within 30%)
+      const budgetDiff = Math.abs(m.budget - meal.budget) / meal.budget;
+      if (budgetDiff <= 0.3) score += 2;
+
+      // Similar health score
+      if (Math.abs(m.healthScore - meal.healthScore) <= 1) score += 1;
+
+      // Shared ingredients
+      const sharedIngredients = m.ingredients.filter(ing =>
+        meal.ingredients.some(mealIng =>
+          ing.toLowerCase().includes(mealIng.toLowerCase()) ||
+          mealIng.toLowerCase().includes(ing.toLowerCase())
+        )
+      ).length;
+      score += sharedIngredients;
+
+      // Similar health attributes
+      if (m.veg === meal.veg) score += 0.5;
+      if (m.leg === meal.leg) score += 0.5;
+      if (m.protein === meal.protein) score += 0.5;
+      if (m.lowSugar === meal.lowSugar) score += 0.5;
+      if (m.lowSalt === meal.lowSalt) score += 0.5;
+
+      return score >= 3; // Threshold for similarity
     });
 
-    console.log("📝 Acceptance recorded:", acceptanceRecord);
+    // Sort by similarity and return top 3
+    return similar.slice(0, 3);
+  };
 
-    // 2. Update user record
-    const userUpdate = await supabaseFetch('users', `?id=eq.${user.id}`, 'PATCH', {
-      terms_accepted: true,
-      terms_accepted_at: new Date().toISOString()
-    });
+  const handleRegister = async (name, email, password, username, setIsRegistering) => {
+    // 1. Basic Validation
+    if (!name || !email || !password || !username) {
+      alert("Please fill in all fields");
+      return;
+    }
 
-    console.log("👤 User updated:", userUpdate);
-
-    // 3. Update state
-    setHasAcceptedTerms(true);
-    setShowTermsModal(false);
-    
-    // 4. Track the activity
-    trackActivity('accept_terms', {
-      terms_version: '1.0',
-      timestamp: new Date().toISOString()
-    });
-
-    alert("Thank you for accepting our Terms and Privacy Policy! 🎉");
-
-  } catch (error) {
-    console.error("❌ Error recording terms acceptance:", error);
-    alert("Failed to record acceptance. Please try again.");
-  }
-};
-
-   const ResetPasswordScreen = () => {
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // NEW
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // NEW
-
-  const handleSubmit = () => {
-    if (!newPassword || newPassword.length < 6) {
+    if (password.length < 6) {
       alert("Password must be at least 6 characters");
       return;
     }
-    
-    if (newPassword !== confirmPassword) {
-      alert("Passwords don't match!");
-      return;
-    }
-    
-    handleUpdatePassword(newPassword);
-  };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-pink-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <div className="text-center mb-6">
-          <div className="text-5xl mb-4">🔐</div>
-          <h2 className="text-2xl font-bold text-gray-800">Set New Password</h2>
-          <p className="text-sm text-gray-600 mt-2">Choose a strong password for your account</p>
-        </div>
-        
-        <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            New Password
-          </label>
-          {/* NEW: Password with visibility toggle */}
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Enter new password (min 6 characters)"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
-              {showPassword ? <span className="text-xl">👁️</span> : <span className="text-xl">🙈</span>}
-            </button>
-          </div>
-        </div>
-        
-        <div className="mb-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Confirm Password
-          </label>
-          {/* NEW: Confirm password with visibility toggle */}
-          <div className="relative">
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              placeholder="Re-enter your password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
-              {showConfirmPassword ? <span className="text-xl">👁️</span> : <span className="text-xl">🙈</span>}
-            </button>
-          </div>
-        </div>
-        
-        <button
-          onClick={handleSubmit}
-          className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
-        >
-          Update Password
-        </button>
-        
-        <button
-          onClick={() => setCurrentScreen('login')}
-          className="w-full mt-3 text-gray-600 hover:text-gray-800 text-sm font-medium"
-        >
-          Back to Login
-        </button>
-      </div>
-    </div>
-  );
-};
+    setLoading(true);
 
-const handleLogin = async (email, password) => {
-  setLoading(true);
-  try {
-    const supabaseUrl = 'https://ltrdgyraevtxwroukxkt.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cmRneXJhZXZ0eHdyb3VreGt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyODA5MDEsImV4cCI6MjA4MTg1NjkwMX0.hERWWr2FjKX9zJJVU3j8JjE2y1ZKJeQCsHyrm1yueEI';
-    const client = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-    const { data, error } = await client.auth.signInWithPassword({
-      email: email.trim(),
-      password: password,
-    });
-
-    if (error) throw error;
-
-    if (data?.user) {
-      // 1. Point to 'users' instead of 'profiles'
-const { data: profile, error: profileError } = await client
-  .from('users') 
-  .select('*')
-  .eq('id', data.user.id)
-  .single();
-
-  if (data?.user) {
-  const { data: profile, error: profileError } = await client
-    .from('users') 
-    .select('*')
-    .eq('id', data.user.id)
-    .single();
-
-  if (profileError) console.error("Profile error:", profileError);
-
-  const userData = {
-    id: data.user.id,
-    email: data.user.email,
-    username: profile?.username || data.user.email, 
-    name: profile?.full_name || 'Dishi Member'
-  };
-
-  localStorage.setItem('dishiUser', JSON.stringify(userData));
-  setUser(userData);
-  setIsLoggedIn(true);
-  setCurrentScreen('suggestions');
-
-  // Check if user has accepted terms
-  await checkTermsAcceptance(data.user.id);
-
-  await fetchFriendRequests(data.user.id);
-  await fetchFriends(data.user.id);
-}
-
-if (profileError) console.error("Profile error:", profileError);
-
-const userData = {
-  id: data.user.id,
-  email: data.user.email,
-  // Map the correct columns from your SQL table
-  username: profile?.username || data.user.email, 
-  name: profile?.full_name || 'Dishi Member'
-};
-
-      // 1. Save to Storage FIRST so it's available on refresh
-      localStorage.setItem('dishiUser', JSON.stringify(userData));
-      
-      // 2. Update States
-      setUser(userData);
-      setIsLoggedIn(true);
-      
-      // 3. THIS FIXES THE BLANK MIDDLE: Force the view to 'home' immediately
-      setCurrentScreen('suggestions'); // Use 'suggestions' or whatever you want the home screen to be
-
-      // 4. Trigger data fetch immediately using the data we just got
-      // (Bypasses the delay of waiting for the 'user' state to refresh)
-      await fetchFriendRequests(data.user.id);
-      await fetchFriends(data.user.id);
-      // ✅ CHECK TERMS ACCEPTANCE AFTER LOGIN
-      await checkTermsAcceptance(data.user.id);
-    }
-  } catch (error) {
-    console.error("Login detail error:", error);
-    alert("Login failed: " + error.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
-const renderContent = () => {
-  // If not logged in, the main logic should handle the Login/Signup screen
-  if (!isLoggedIn) return null;
-
-  switch (currentScreen) {
-    case 'home':
-      return (
-        <div className="p-4">
-          <h2 className="text-xl font-bold mb-4">Welcome back, {user?.name}!</h2>
-          {/* Add your Dashboard/Main content here */}
-          <div className="bg-orange-50 p-6 rounded-2xl border-2 border-orange-100">
-            <p className="text-orange-800">Select a meal to get started with your streak!</p>
-          </div>
-        </div>
-      );
-    case 'planner':
-      return <div className="p-4"><h3>Meal Planner Screen</h3></div>;
-    case 'friends':
-      // This is where your Friend Request UI from earlier goes
-      return <FriendsScreen />; 
-    case 'profile':
-      return <div className="p-4"><h3>Your Profile Settings</h3></div>;
-    default:
-      return <div className="p-4"><h3>Home Screen</h3></div>;
-  }
-};
-
-  const handleRegister = async (name, email, password, username, setIsRegistering) => {
-  // 1. Basic Validation
-  if (!name || !email || !password || !username) {
-    alert("Please fill in all fields");
-    return;
-  }
-
-  if (password.length < 6) {
-    alert("Password must be at least 6 characters");
-    return;
-  }
-
-  try {
-    // 2. Create the account in Supabase Authentication
-    const authResponse = await fetch(`${supabaseUrl}/auth/v1/signup`, {
-      method: 'POST',
-      headers: {
-        'apikey': supabaseAnonKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+    try {
+      // 2. Create the account using Supabase Client (handles session automatically)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email,
         password: password,
-        // This 'data' object stores info directly in the Auth user metadata
-        data: {
-          full_name: name,
-          user_name: username
+        options: {
+          data: {
+            full_name: name,
+            user_name: username
+          }
         }
-      })
-    });
-
-    const authData = await authResponse.json();
-
-    if (!authResponse.ok) {
-      throw new Error(authData.msg || authData.message || "Registration failed");
-    }
-
-    // 3. Store the profile in your public 'users' table 
-    // This makes the user "visible" in your regular database editor
-    if (authData.id || authData.user?.id) {
-      const userId = authData.id || authData.user.id;
-      
-      await supabaseFetch('users', '', 'POST', {
-        id: userId,
-        email: email,
-        username: username,
-        full_name: name,
-        created_at: new Date().toISOString(),
-        streak: 0,
-        terms_accepted: false
       });
-    }
 
-    alert("Registration successful! You can now log in.");
-    
-    // 4. Switch the UI back to the Login screen
-    if (setIsRegistering) {
-      setIsRegistering(false);
-    }
+      if (authError) throw authError;
 
-  } catch (error) {
-    console.error("Registration error:", error);
-    alert(error.message);
-  }
-};
+      // 3. Store the profile in 'users' table
+      // The supabase client will use the new session token for this insert, passing RLS
+      if (authData.user) {
+        const userId = authData.user.id;
+
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: userId,
+              email: email,
+              username: username.toLowerCase().trim(), // Store cleaned username
+              full_name: name,
+              created_at: new Date().toISOString(),
+              streak: 0
+            }
+          ]);
+
+        if (insertError) {
+          console.error("Profile creation failed:", insertError);
+          // Don't throw here, the auth account was created. User can fix profile later or we can retry.
+          // But for now let's alert so we know.
+          alert("Account created but profile setup failed. Please contact support.");
+        } else {
+          alert("Registration successful! You can now log in.");
+          if (setIsRegistering) setIsRegistering(false);
+        }
+      }
+
+    } catch (error) {
+      console.error("Registration error:", error);
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const trackMeal = (meal) => {
-  const existingMeal = mealHistory.find(m => m.id === meal.id);
-  
-  if (existingMeal) {
-    // Meal has been taken before
-    setShowRepeatNotification(true);
-    
-    // Find similar alternatives
-    const alternatives = findSimilarMeals(meal);
-    setSuggestedAlternatives(alternatives);
-    
-    // Update meal count
-    setMealHistory(mealHistory.map(m => 
-      m.id === meal.id 
-        ? { ...m, count: m.count + 1, lastTaken: new Date().toISOString() }
-        : m
-    ));
-    
-    trackActivity('repeat_meal', {
-      meal_name: meal.name,
-      meal_id: meal.id,
-      times_taken: existingMeal.count + 1,
-      timestamp: new Date().toISOString()
-    });
-  } else {
-    // First time taking this meal
-    setMealHistory([...mealHistory, {
-      id: meal.id,
-      name: meal.name,
-      count: 1,
-      lastTaken: new Date().toISOString()
-    }]);
-    
-    trackActivity('new_meal', {
-      meal_name: meal.name,
-      meal_id: meal.id,
-      timestamp: new Date().toISOString()
-    });
-  }
-};
+    const existingMeal = mealHistory.find(m => m.id === meal.id);
 
-const findSimilarMeals = (meal) => {
-  // Find meals that are similar but not the same
-  const similar = allMeals.filter(m => {
-    if (m.id === meal.id) return false;
-    
-    // Calculate similarity score
-    let score = 0;
-    
-    // Same category
-    if (m.category === meal.category) score += 3;
-    
-    // Similar budget (within 30%)
-    const budgetDiff = Math.abs(m.budget - meal.budget) / meal.budget;
-    if (budgetDiff <= 0.3) score += 2;
-    
-    // Similar health score
-    if (Math.abs(m.healthScore - meal.healthScore) <= 1) score += 1;
-    
-    // Shared ingredients
-    const sharedIngredients = m.ingredients.filter(ing => 
-      meal.ingredients.some(mealIng => 
-        ing.toLowerCase().includes(mealIng.toLowerCase()) || 
-        mealIng.toLowerCase().includes(ing.toLowerCase())
-      )
-    ).length;
-    score += sharedIngredients;
-    
-    // Similar health attributes
-    if (m.veg === meal.veg) score += 0.5;
-    if (m.leg === meal.leg) score += 0.5;
-    if (m.protein === meal.protein) score += 0.5;
-    if (m.lowSugar === meal.lowSugar) score += 0.5;
-    if (m.lowSalt === meal.lowSalt) score += 0.5;
-    
-    return score >= 3; // Threshold for similarity
-  });
-  
-  // Sort by similarity and return top 3
-  return similar.slice(0, 3);
-};
+    if (existingMeal) {
+      // Meal has been taken before
+      setShowRepeatNotification(true);
 
-const handleSignUp = async (email, password, username, fullName) => {
-  setLoading(true);
-  try {
-    const supabaseUrl = 'https://YOUR_PROJECT_URL.supabase.co';
-    const supabaseKey = 'YOUR_ANON_KEY';
-    const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+      // Find similar alternatives
+      const alternatives = findSimilarMeals(meal);
+      setSuggestedAlternatives(alternatives);
 
-    const { data: authData, error: authError } = await client.auth.signUp({
-      email,
-      password,
-    });
+      // Update meal count
+      setMealHistory(mealHistory.map(m =>
+        m.id === meal.id
+          ? { ...m, count: m.count + 1, lastTaken: new Date().toISOString() }
+          : m
+      ));
 
-    if (authError) throw authError;
+      trackActivity('repeat_meal', {
+        meal_name: meal.name,
+        meal_id: meal.id,
+        times_taken: existingMeal.count + 1,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      // First time taking this meal
+      setMealHistory([...mealHistory, {
+        id: meal.id,
+        name: meal.name,
+        count: 1,
+        lastTaken: new Date().toISOString()
+      }]);
 
-    if (authData.user) {
-      await client.from('profiles').insert([
-        {
+      trackActivity('new_meal', {
+        meal_name: meal.name,
+        meal_id: meal.id,
+        timestamp: new Date().toISOString()
+      });
+    }
+  };
+
+
+
+  const handleSignUp = async (email, password, username, fullName) => {
+    setLoading(true);
+    try {
+      const supabaseUrl = 'https://YOUR_PROJECT_URL.supabase.co';
+      const supabaseKey = 'YOUR_ANON_KEY';
+      const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+      const { data: authData, error: authError } = await client.auth.signUp({
+        email,
+        password,
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        await client.from('users').insert([
+          {
+            id: authData.user.id,
+            email: email,
+            username: username.toLowerCase().trim(),
+            full_name: fullName,
+            created_at: new Date().toISOString(),
+            streak: 0
+          },
+        ]);
+
+        const newUser = {
           id: authData.user.id,
-          username: username.toLowerCase().trim(),
-          full_name: fullName,
-          created_at: new Date().toISOString(),
-        },
-      ]);
+          email: email,
+          username: username,
+          name: fullName
+        };
 
-      const newUser = {
-        id: authData.user.id,
-        email: email,
-        username: username,
-        name: fullName
-      };
-      
-      setUser(newUser);
-      setIsLoggedIn(true);
-      localStorage.setItem('dishiUser', JSON.stringify(newUser));
+        setUser(newUser);
+        setIsLoggedIn(true);
+        localStorage.setItem('dishiUser', JSON.stringify(newUser));
+      }
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    alert(error.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-const searchUsers = async () => {
-  if (!searchUsername.trim()) return;
+  const searchUsers = async () => {
+    if (!searchUsername.trim()) return;
 
-  try {
-    // We call the database directly via URL
-    const query = `?username=ilike.*${searchUsername}*&select=id,username,full_name`;
-    const data = await supabaseFetch('users', query);
+    try {
+      // We call the database directly via URL
+      const query = `?username=ilike.*${searchUsername}*&select=id,username,full_name`;
+      const data = await supabaseFetch('users', query);
 
-    if (data.length === 0) {
-      alert("No users found.");
+      if (data.length === 0) {
+        alert("No users found.");
+      }
+
+      setSearchResults(data);
+    } catch (err) {
+      console.error(err);
+      alert("Database Error: " + err.message);
     }
-    
-    setSearchResults(data);
-  } catch (err) {
-    console.error(err);
-    alert("Database Error: " + err.message);
-  }
-};
+  };
 
-const removeFriend = async (friendId) => {
-  if (!window.confirm("Are you sure you want to remove this friend?")) return;
+  const removeFriend = async (friendId) => {
+    if (!window.confirm("Are you sure you want to remove this friend?")) return;
 
-  try {
-    // We delete the friendship where you are either the sender or the receiver
-    const { error } = await supabase
-      .from('friendships')
-      .delete()
-      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${user.id})`);
+    try {
+      // We delete the friendship where you are either the sender or the receiver
+      const { error } = await supabase
+        .from('friendships')
+        .delete()
+        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${user.id})`);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    // Update local state so the UI refreshes immediately
-    setFriends(friends.filter(f => f.id !== friendId));
-    alert("Friend removed");
+      // Update local state so the UI refreshes immediately
+      setFriends(friends.filter(f => f.id !== friendId));
+      alert("Friend removed");
 
-  } catch (error) {
-    console.error("Error removing friend:", error.message);
-    alert("Could not remove friend. Please try again.");
-  }
-};
+    } catch (error) {
+      console.error("Error removing friend:", error.message);
+      alert("Could not remove friend. Please try again.");
+    }
+  };
 
-const sendFriendRequest = async (targetUser) => {
-  if (targetUser.id === user.id) {
-    alert("You cannot add yourself as a friend.");
-    return;
-  }
-
-  try {
-    // 1. Check for existing requests
-    const checkQuery = `?or=(and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id}))&select=id,status`;
-    const existingRequest = await supabaseFetch('friend_requests', checkQuery);
-
-    if (existingRequest && existingRequest.length > 0) {
-      alert(`A friend request is already ${existingRequest[0].status}.`);
+  const sendFriendRequest = async (targetUser) => {
+    if (targetUser.id === user.id) {
+      alert("You cannot add yourself as a friend.");
       return;
     }
 
-    // 2. Insert ONLY into friend_requests (NOT friendships yet!)
+    try {
+      // 1. Check for existing requests
+      const checkQuery = `?or=(and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id}))&select=id,status`;
+      const existingRequest = await supabaseFetch('friend_requests', checkQuery);
+
+      if (existingRequest && existingRequest.length > 0) {
+        alert(`A friend request is already ${existingRequest[0].status}.`);
+        return;
+      }
+
+      // 2. Insert ONLY into friend_requests (NOT friendships yet!)
+      const payload = {
+        sender_id: user.id,
+        receiver_id: targetUser.id,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
+
+      console.log("Sending friend request:", payload);
+      const result = await supabaseFetch('friend_requests', '', 'POST', payload);
+
+      if (result) {
+        // 3. Track activity
+        trackActivity('send_friend_request', {
+          to_user_id: targetUser.id,
+          to_username: targetUser.username,
+          timestamp: new Date().toISOString()
+        });
+
+        // 4. Update UI
+        alert(`Friend request sent to @${targetUser.username}!`);
+        setSearchUsername('');
+        setSearchResults([]);
+
+        console.log("✅ Friend request sent successfully!");
+      } else {
+        alert('Failed to send friend request');
+      }
+    } catch (error) {
+      console.error('Error sending friend request:', error);
+      alert('Failed to send request: ' + error.message);
+    }
+  };
+
+  const handleFriendRequest = async (request, accept) => {
+    try {
+      if (accept) {
+        // 1. Update friend_requests table to 'accepted'
+        const updatePayload = { status: 'accepted' };
+        const updateResult = await supabaseFetch('friend_requests', `?id=eq.${request.id}`, 'PATCH', updatePayload);
+
+        console.log("Friend request updated:", updateResult);
+
+        // 2. Create friendship record (this is when we add to friendships table)
+        const friendshipPayload = {
+          sender_id: request.sender_id,
+          receiver_id: request.receiver_id,
+          status: 'accepted',
+          created_at: new Date().toISOString()
+        };
+
+        const friendshipResult = await supabaseFetch('friendships', '', 'POST', friendshipPayload);
+        console.log("Friendship created:", friendshipResult);
+
+        // 3. Track activity
+        trackActivity('accept_friend_request', {
+          from_user_id: request.sender_id,
+          timestamp: new Date().toISOString()
+        });
+
+      } else {
+        // Decline: Just delete the friend request
+        await supabaseFetch('friend_requests', `?id=eq.${request.id}`, 'DELETE');
+
+        trackActivity('decline_friend_request', {
+          from_user_id: request.sender_id,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // 4. Refresh the friends list and requests
+      await fetchFriends(user.id);
+      await fetchFriendRequests(user.id);
+
+      alert(accept ? "Friend added! 🎉" : "Request declined");
+
+    } catch (error) {
+      console.error("Friend request error:", error);
+      alert("Update failed: " + error.message);
+    }
+  };
+
+  useEffect(() => {
+    console.log("👀 useEffect triggered, user:", user?.id);
+
+    if (user?.id) {
+      console.log("🚀 Fetching friends and requests...");
+      fetchFriends(user.id);
+      fetchFriendRequests(user.id);
+    } else {
+      console.log("⚠️ No user, clearing data");
+      setFriends([]);
+      setFriendRequests([]);
+    }
+  }, [user]);
+
+  const fetchFriends = async (userId) => {
+    if (!userId) {
+      userId = user?.id;
+    }
+
+    if (!userId) return;
+
+    try {
+      // Get all accepted friendships
+      const query = `?status=eq.accepted&or=(sender_id.eq.${userId},receiver_id.eq.${userId})&select=id,sender_id,receiver_id`;
+      const data = await supabaseFetch('friendships', query);
+
+      if (!data || data.length === 0) {
+        setFriends([]);
+        return;
+      }
+
+      // Get friend profiles
+      const formatted = await Promise.all(
+        data.map(async (f) => {
+          const friendId = f.sender_id === userId ? f.receiver_id : f.sender_id;
+          const friendQuery = `?id=eq.${friendId}&select=id,username,full_name`;
+          const friendData = await supabaseFetch('users', friendQuery);
+
+          if (friendData && friendData[0]) {
+            return {
+              id: friendData[0].id,
+              name: friendData[0].full_name || friendData[0].username,
+              username: friendData[0].username,
+              avatar: '🥗',
+              streak: 0
+            };
+          }
+          return null;
+        })
+      );
+
+      setFriends(formatted.filter(f => f !== null));
+    } catch (err) {
+      console.error("Fetch Friends Error:", err);
+      setFriends([]);
+    }
+  };
+
+  const fetchFriendRequests = async (userId) => {
+    console.log("🔍 fetchFriendRequests called with userId:", userId);
+
+    if (!userId) {
+      console.log("❌ No userId provided");
+      return;
+    }
+
+    try {
+      // Build the URL manually for debugging
+      const query = `?receiver_id=eq.${userId}&status=eq.pending&select=*`;
+      const url = `${supabaseUrl}/rest/v1/friend_requests${query}`;
+
+      console.log("📡 Fetching from:", url);
+
+      const response = await fetch(url, {
+        headers: {
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      console.log("📦 Raw friend_requests data:", data);
+
+      if (!data || data.length === 0) {
+        console.log("⚠️ No pending requests found");
+        setFriendRequests([]);
+        return;
+      }
+
+      // Get sender details for each request
+      const formatted = await Promise.all(
+        data.map(async (req) => {
+          console.log("👤 Fetching sender details for:", req.sender_id);
+
+          const senderQuery = `?id=eq.${req.sender_id}&select=id,username,full_name`;
+          const senderData = await supabaseFetch('users', senderQuery);
+
+          console.log("👤 Sender data:", senderData);
+
+          return {
+            ...req,
+            sender_name: senderData?.[0]?.full_name || 'Unknown User',
+            sender_username: senderData?.[0]?.username || 'unknown'
+          };
+        })
+      );
+
+      console.log("✅ Formatted friend requests:", formatted);
+      setFriendRequests(formatted);
+
+    } catch (error) {
+      console.error('❌ Error fetching requests:', error);
+      setFriendRequests([]);
+    }
+  };
+
+  const selectMeal = (meal) => {
+    trackMeal(meal);
+    setSelectedMeal(meal);
+  };
+
+  const submitFeedback = async (text) => {
+    if (!text.trim()) return;
+
     const payload = {
-      sender_id: user.id,
-      receiver_id: targetUser.id,
-      status: 'pending',
+      feedback_text: text,
+      user_email: user?.email || 'anonymous@example.com',
+      user_id: user?.id || null,
       created_at: new Date().toISOString()
     };
 
-    console.log("Sending friend request:", payload);
-    const result = await supabaseFetch('friend_requests', '', 'POST', payload);
+    try {
+      const result = await supabaseFetch('feedback', '', 'POST', payload);
 
-    if (result) {
-      // 3. Track activity
-      trackActivity('send_friend_request', {
-        to_user_id: targetUser.id,
-        to_username: targetUser.username,
-        timestamp: new Date().toISOString()
-      });
-
-      // 4. Update UI
-      alert(`Friend request sent to @${targetUser.username}!`);
-      setSearchUsername('');
-      setSearchResults([]);
-      
-      console.log("✅ Friend request sent successfully!");
-    } else {
-      alert('Failed to send friend request');
-    }
-  } catch (error) {
-    console.error('Error sending friend request:', error);
-    alert('Failed to send request: ' + error.message);
-  }
-};
-
- const handleFriendRequest = async (request, accept) => {
-  try {
-    if (accept) {
-      // 1. Update friend_requests table to 'accepted'
-      const updatePayload = { status: 'accepted' };
-      const updateResult = await supabaseFetch('friend_requests', `?id=eq.${request.id}`, 'PATCH', updatePayload);
-      
-      console.log("Friend request updated:", updateResult);
-      
-      // 2. Create friendship record (this is when we add to friendships table)
-      const friendshipPayload = {
-        sender_id: request.sender_id,
-        receiver_id: request.receiver_id,
-        status: 'accepted',
-        created_at: new Date().toISOString()
-      };
-      
-      const friendshipResult = await supabaseFetch('friendships', '', 'POST', friendshipPayload);
-      console.log("Friendship created:", friendshipResult);
-      
-      // 3. Track activity
-      trackActivity('accept_friend_request', {
-        from_user_id: request.sender_id,
-        timestamp: new Date().toISOString()
-      });
-      
-    } else {
-      // Decline: Just delete the friend request
-      await supabaseFetch('friend_requests', `?id=eq.${request.id}`, 'DELETE');
-      
-      trackActivity('decline_friend_request', {
-        from_user_id: request.sender_id,
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // 4. Refresh the friends list and requests
-    await fetchFriends(user.id);
-    await fetchFriendRequests(user.id);
-    
-    alert(accept ? "Friend added! 🎉" : "Request declined");
-    
-  } catch (error) {
-    console.error("Friend request error:", error);
-    alert("Update failed: " + error.message);
-  }
-};
-
-useEffect(() => {
-  console.log("👀 useEffect triggered, user:", user?.id);
-  
-  if (user?.id) {
-    console.log("🚀 Fetching friends and requests...");
-    fetchFriends(user.id);
-    fetchFriendRequests(user.id);
-  } else {
-    console.log("⚠️ No user, clearing data");
-    setFriends([]);
-    setFriendRequests([]);
-  }
-}, [user]);
-
-const fetchFriends = async (userId) => {
-  if (!userId) {
-    userId = user?.id;
-  }
-  
-  if (!userId) return;
-
-  try {
-    // Get all accepted friendships
-    const query = `?status=eq.accepted&or=(sender_id.eq.${userId},receiver_id.eq.${userId})&select=id,sender_id,receiver_id`;
-    const data = await supabaseFetch('friendships', query);
-
-    if (!data || data.length === 0) {
-      setFriends([]);
-      return;
-    }
-
-    // Get friend profiles
-    const formatted = await Promise.all(
-      data.map(async (f) => {
-        const friendId = f.sender_id === userId ? f.receiver_id : f.sender_id;
-        const friendQuery = `?id=eq.${friendId}&select=id,username,full_name`;
-        const friendData = await supabaseFetch('users', friendQuery);
-        
-        if (friendData && friendData[0]) {
-          return {
-            id: friendData[0].id,
-            name: friendData[0].full_name || friendData[0].username,
-            username: friendData[0].username,
-            avatar: '🥗',
-            streak: 0
-          };
-        }
-        return null;
-      })
-    );
-
-    setFriends(formatted.filter(f => f !== null));
-  } catch (err) {
-    console.error("Fetch Friends Error:", err);
-    setFriends([]);
-  }
-};
-
-const fetchFriendRequests = async (userId) => {
-  console.log("🔍 fetchFriendRequests called with userId:", userId);
-  
-  if (!userId) {
-    console.log("❌ No userId provided");
-    return;
-  }
-
-  try {
-    // Build the URL manually for debugging
-    const query = `?receiver_id=eq.${userId}&status=eq.pending&select=*`;
-    const url = `${supabaseUrl}/rest/v1/friend_requests${query}`;
-    
-    console.log("📡 Fetching from:", url);
-    
-    const response = await fetch(url, {
-      headers: {
-        'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-        'Content-Type': 'application/json'
+      if (result) {
+        alert("Thank you for your feedback!");
+        trackActivity('submit_feedback', { feedback_length: text.length });
+      } else {
+        alert("Failed to send feedback. Please try again.");
       }
-    });
-
-    const data = await response.json();
-    console.log("📦 Raw friend_requests data:", data);
-
-    if (!data || data.length === 0) {
-      console.log("⚠️ No pending requests found");
-      setFriendRequests([]);
+    } catch (error) {
+      console.error("Feedback error:", error);
+      alert("Error sending feedback: " + error.message);
+    }
+  };
+  const sendMealToFriends = async () => {
+    if (!selectedMeal || selectedFriendsForMeal.length === 0) {
+      alert("Please select a meal and at least one friend");
       return;
     }
 
-    // Get sender details for each request
-    const formatted = await Promise.all(
-      data.map(async (req) => {
-        console.log("👤 Fetching sender details for:", req.sender_id);
-        
-        const senderQuery = `?id=eq.${req.sender_id}&select=id,username,full_name`;
-        const senderData = await supabaseFetch('users', senderQuery);
-        
-        console.log("👤 Sender data:", senderData);
-        
-        return {
-          ...req,
-          sender_name: senderData?.[0]?.full_name || 'Unknown User',
-          sender_username: senderData?.[0]?.username || 'unknown'
+    try {
+      // Create activity records for each friend
+      const mealPromises = selectedFriendsForMeal.map(async (friendId) => {
+        const payload = {
+          user_id: user.id,
+          user_email: user.email,
+          sender_id: user.id,
+          receiver_id: friendId,
+          action_type: 'share_meal',
+          action_details: {
+            meal_name: selectedMeal.name,
+            budget: selectedMeal.budget,
+            meal_id: selectedMeal.id,
+            category: selectedMeal.category
+          },
+          created_at: new Date().toISOString()
         };
-      })
-    );
 
-    console.log("✅ Formatted friend requests:", formatted);
-    setFriendRequests(formatted);
-    
-  } catch (error) {
-    console.error('❌ Error fetching requests:', error);
-    setFriendRequests([]);
-  }
-};
+        console.log("📤 Sharing meal:", payload);
+        return await supabaseFetch('user_activity', '', 'POST', payload);
+      });
 
-  const selectMeal = (meal) => {
-  trackMeal(meal);
-  setSelectedMeal(meal);
-};
+      const results = await Promise.all(mealPromises);
+      console.log("✅ Meals shared:", results);
 
-  const submitFeedback = async (text) => {
-  if (!text.trim()) return;
+      alert(`🎉 ${selectedMeal.name} shared with ${selectedFriendsForMeal.length} friend(s)!`);
 
-  const payload = {
-    feedback_text: text,
-    user_email: user?.email || 'anonymous@example.com',
-    user_id: user?.id || null,
-    created_at: new Date().toISOString()
+      // Track the activity
+      trackActivity('share_meals_bulk', {
+        meal_name: selectedMeal.name,
+        friends_count: selectedFriendsForMeal.length,
+        timestamp: new Date().toISOString()
+      });
+
+      // Reset and go back
+      setSelectedFriendsForMeal([]);
+      setCurrentScreen('suggestions');
+
+    } catch (err) {
+      console.error("Error sharing meals:", err);
+      alert("Failed to share meal. Please try again.");
+    }
   };
 
-  try {
-    const result = await supabaseFetch('feedback', '', 'POST', payload);
-    
-    if (result) {
-      alert("Thank you for your feedback!");
-      trackActivity('submit_feedback', { feedback_length: text.length });
-    } else {
-      alert("Failed to send feedback. Please try again.");
+  const trackActivity = async (action, details = {}) => {
+    // Don't track if no user
+    if (!user?.id || !user?.email) {
+      console.log("⚠️ No user logged in, skipping activity track");
+      return;
     }
-  } catch (error) {
-    console.error("Feedback error:", error);
-    alert("Error sending feedback: " + error.message);
-  }
-};
-const sendMealToFriends = async () => {
-  if (!selectedMeal || selectedFriendsForMeal.length === 0) {
-    alert("Please select a meal and at least one friend");
-    return;
-  }
 
-  try {
-    // Create activity records for each friend
-    const mealPromises = selectedFriendsForMeal.map(async (friendId) => {
+    try {
       const payload = {
         user_id: user.id,
         user_email: user.email,
-        sender_id: user.id,
-        receiver_id: friendId,
-        action_type: 'share_meal',
-        action_details: { 
-          meal_name: selectedMeal.name, 
-          budget: selectedMeal.budget,
-          meal_id: selectedMeal.id,
-          category: selectedMeal.category
-        },
+        action_type: action,
+        action_details: details,
         created_at: new Date().toISOString()
       };
-      
-      console.log("📤 Sharing meal:", payload);
-      return await supabaseFetch('user_activity', '', 'POST', payload);
-    });
 
-    const results = await Promise.all(mealPromises);
-    console.log("✅ Meals shared:", results);
+      console.log("📊 Tracking activity for:", user.email, "Action:", action);
+      console.log("Payload:", payload);
 
-    alert(`🎉 ${selectedMeal.name} shared with ${selectedFriendsForMeal.length} friend(s)!`);
-    
-    // Track the activity
-    trackActivity('share_meals_bulk', {
-      meal_name: selectedMeal.name,
-      friends_count: selectedFriendsForMeal.length,
-      timestamp: new Date().toISOString()
-    });
+      const result = await supabaseFetch('user_activity', '', 'POST', payload);
 
-    // Reset and go back
-    setSelectedFriendsForMeal([]);
-    setCurrentScreen('suggestions');
-    
-  } catch (err) {
-    console.error("Error sharing meals:", err);
-    alert("Failed to share meal. Please try again.");
-  }
-};
-
-  const trackActivity = async (action, details = {}) => {
-  // Don't track if no user
-  if (!user?.id || !user?.email) {
-    console.log("⚠️ No user logged in, skipping activity track");
-    return;
-  }
-  
-  try {
-    const payload = {
-      user_id: user.id,
-      user_email: user.email,
-      action_type: action,
-      action_details: details,
-      created_at: new Date().toISOString()
-    };
-    
-    console.log("📊 Tracking activity for:", user.email, "Action:", action);
-    console.log("Payload:", payload);
-    
-    const result = await supabaseFetch('user_activity', '', 'POST', payload);
-    
-    if (result) {
-      console.log("✅ Activity tracked successfully!");
-    } else {
-      console.error("❌ Activity tracking returned null");
+      if (result) {
+        console.log("✅ Activity tracked successfully!");
+      } else {
+        console.error("❌ Activity tracking returned null");
+      }
+    } catch (error) {
+      console.error("❌ Activity tracking error:", error);
     }
-  } catch (error) {
-    console.error("❌ Activity tracking error:", error);
-  }
-};
-
-  const NavBar = () => (
-  <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-4 shadow-lg">
-    <div className="flex justify-between items-center max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold">🍽️ DishiStudio</h1>
-      {isLoggedIn && (
-        <button 
-          onClick={() => setCurrentScreen('profile')}
-          className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-2 rounded-lg transition-all"
-        >
-          <span className="text-sm font-semibold">{user?.name}</span>
-          <span className="text-lg">⚙️</span>
-        </button>
-      )}
-    </div>
-  </div>
-);
-
-  const BottomNav = () => (
-  <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-    <div className="flex justify-around items-center max-w-6xl mx-auto">
-      <button onClick={() => { setCurrentScreen('suggestions'); trackActivity('navigate', { screen: 'suggestions' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
-        <Home className="w-6 h-6" />
-        <span className="text-xs mt-1">Home</span>
-      </button>
-      <button onClick={() => { setCurrentScreen('budget'); trackActivity('navigate', { screen: 'budget' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
-        <DollarSign className="w-6 h-6" />
-        <span className="text-xs mt-1">Budget</span>
-      </button>
-      <button onClick={() => { setCurrentScreen('friends'); trackActivity('navigate', { screen: 'friends' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
-        <Users className="w-6 h-6" />
-        <span className="text-xs mt-1">Friends</span>
-      </button>
-      <button onClick={() => { setCurrentScreen('streaks'); trackActivity('navigate', { screen: 'streaks' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
-        <Flame className="w-6 h-6" />
-        <span className="text-xs mt-1">Streaks</span>
-      </button>
-      <button onClick={() => { setCurrentScreen('feedback'); trackActivity('navigate', { screen: 'feedback' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
-        <MessageSquare className="w-6 h-6" />
-        <span className="text-xs mt-1">Feedback</span>
-      </button>
-    </div>
-  </div>
-);
-  const LoginScreen = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    name: '',
-    username: ''
-  });
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // NEW: Track visibility
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-pink-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-orange-100">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-          {isRegistering ? 'Create Account' : 'Welcome Back'}
-        </h2>
-        
-        {isRegistering && (
-          <>
-            <div className="mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Full Name
-              </label>
-              <input
-                type="text"
-                placeholder="Enter your full name"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Username
-              </label>
-              <input
-                type="text"
-                placeholder="Choose a unique username"
-                value={formData.username}
-                onChange={(e) => handleInputChange('username', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-              />
-            </div>
-          </>
+  const NavBar = () => (
+    <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-4 shadow-lg">
+      <div className="flex justify-between items-center max-w-6xl mx-auto">
+        <h1 className="text-2xl font-bold">🍽️ DishiStudio</h1>
+        {isLoggedIn && (
+          <button
+            onClick={() => setCurrentScreen('profile')}
+            className="flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-2 rounded-lg transition-all"
+          >
+            <span className="text-sm font-semibold">{user?.name}</span>
+            <span className="text-lg">⚙️</span>
+          </button>
         )}
-        
-        <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Email
-          </label>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-          />
-        </div>
-        
-        <div className="mb-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Password
-          </label>
-          {/* NEW: Password input with eye icon */}
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={(e) => handleInputChange('password', e.target.value)}
-              className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
-              {showPassword ? (
-                <span className="text-xl">👁️</span>
-              ) : (
-                <span className="text-xl">🙈</span>
-              )}
-            </button>
-          </div>
-          
-          {!isRegistering && (
-            <div className="flex justify-end mt-2">
-              <button
-                type="button"
-                onClick={() => handleForgotPassword(formData.email)}
-                className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition-colors"
-              >
-                Forgot Password?
-              </button>
-            </div>
-          )}
-        </div>
-        
-        <button
-          onClick={() => isRegistering 
-            ? handleRegister(formData.name, formData.email, formData.password, formData.username, setIsRegistering) 
-            : handleLogin(formData.email, formData.password)}
-          className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all mb-4"
-        >
-          {isRegistering ? 'Register' : 'Login'}
+      </div>
+    </div>
+  );
+
+  const BottomNav = () => (
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+      <div className="flex justify-around items-center max-w-6xl mx-auto">
+        <button onClick={() => { setCurrentScreen('suggestions'); trackActivity('navigate', { screen: 'suggestions' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
+          <Home className="w-6 h-6" />
+          <span className="text-xs mt-1">Home</span>
         </button>
-        
-        <button
-          onClick={() => setIsRegistering(!isRegistering)}
-          className="w-full text-gray-600 hover:text-gray-800 text-sm font-medium"
-        >
-          {isRegistering ? 'Already have an account? Login' : "Don't have an account? Register"}
+        <button onClick={() => { setCurrentScreen('budget'); trackActivity('navigate', { screen: 'budget' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
+          <DollarSign className="w-6 h-6" />
+          <span className="text-xs mt-1">Budget</span>
+        </button>
+        <button onClick={() => { setCurrentScreen('friends'); trackActivity('navigate', { screen: 'friends' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
+          <Users className="w-6 h-6" />
+          <span className="text-xs mt-1">Friends</span>
+        </button>
+        <button onClick={() => { setCurrentScreen('streaks'); trackActivity('navigate', { screen: 'streaks' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
+          <Flame className="w-6 h-6" />
+          <span className="text-xs mt-1">Streaks</span>
+        </button>
+        <button onClick={() => { setCurrentScreen('feedback'); trackActivity('navigate', { screen: 'feedback' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
+          <MessageSquare className="w-6 h-6" />
+          <span className="text-xs mt-1">Feedback</span>
         </button>
       </div>
     </div>
   );
-};
+  const LoginScreen = () => {
+    const [formData, setFormData] = useState({
+      email: '',
+      password: '',
+      name: '',
+      username: ''
+    });
+    const [isRegistering, setIsRegistering] = useState(false);
+    const [showPassword, setShowPassword] = useState(false); // NEW: Track visibility
+
+    const handleInputChange = (field, value) => {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-orange-50 to-pink-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-orange-100">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+            {isRegistering ? 'Create Account' : 'Welcome Back'}
+          </h2>
+
+          {isRegistering && (
+            <>
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  placeholder="Choose a unique username"
+                  value={formData.username}
+                  onChange={(e) => handleInputChange('username', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                />
+              </div>
+            </>
+          )}
+
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+            />
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Password
+            </label>
+            {/* NEW: Password input with eye icon */}
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? (
+                  <span className="text-xl">👁️</span>
+                ) : (
+                  <span className="text-xl">🙈</span>
+                )}
+              </button>
+            </div>
+
+            {!isRegistering && (
+              <div className="flex justify-end mt-2">
+                <button
+                  type="button"
+                  onClick={() => handleForgotPassword(formData.email)}
+                  className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition-colors"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => isRegistering
+              ? handleRegister(formData.name, formData.email, formData.password, formData.username, setIsRegistering)
+              : handleLogin(formData.email, formData.password)}
+            className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all mb-4"
+          >
+            {isRegistering ? 'Register' : 'Login'}
+          </button>
+
+          <button
+            onClick={() => setIsRegistering(!isRegistering)}
+            className="w-full text-gray-600 hover:text-gray-800 text-sm font-medium"
+          >
+            {isRegistering ? 'Already have an account? Login' : "Don't have an account? Register"}
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   const RecipeModal = () => {
     if (!viewingRecipe) return null;
@@ -2607,69 +2761,69 @@ const sendMealToFriends = async () => {
     );
   };
 
-  const TermsModal = () => {
-  const [viewingPolicy, setViewingPolicy] = useState(false);
+  const TermsModal = ({ isOpen, onAccept, onClose }) => {
+    const [viewingPolicy, setViewingPolicy] = useState(false); // ✅ top of component
 
-  if (!showTermsModal) return null;
+    if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-6">
-          <h2 className="text-2xl font-bold mb-2">
-            {viewingPolicy ? 'Privacy Policy' : 'Terms of Service'}
-          </h2>
-          <p className="text-sm opacity-90">Please read and accept to continue using DishiStudio</p>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="prose prose-sm max-w-none">
-            <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 leading-relaxed">
-              {viewingPolicy ? PRIVACY_POLICY : TERMS_OF_SERVICE}
-            </pre>
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-6">
+            <h2 className="text-2xl font-bold mb-2">
+              {viewingPolicy ? 'Privacy Policy' : 'Terms of Service'}
+            </h2>
+            <p className="text-sm opacity-90">Please read and accept to continue using DishiStudio</p>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="border-t p-6 bg-gray-50">
-          <div className="flex flex-col gap-3">
-            <button
-              onClick={() => setViewingPolicy(!viewingPolicy)}
-              className="text-sm text-orange-600 hover:text-orange-700 font-semibold"
-            >
-              {viewingPolicy ? '← Back to Terms of Service' : 'View Privacy Policy →'}
-            </button>
-            
-            <div className="flex gap-3">
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="prose prose-sm max-w-none">
+              <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 leading-relaxed">
+                {viewingPolicy ? PRIVACY_POLICY : TERMS_OF_SERVICE}
+              </pre>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t p-6 bg-gray-50">
+            <div className="flex flex-col gap-3">
               <button
-                onClick={handleAcceptTerms}
-                className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-lg font-bold hover:shadow-lg transition-all"
+                onClick={() => setViewingPolicy(!viewingPolicy)}
+                className="text-sm text-orange-600 hover:text-orange-700 font-semibold"
               >
-                ✓ I Accept Terms & Privacy Policy
+                {viewingPolicy ? '← Back to Terms of Service' : 'View Privacy Policy →'}
               </button>
-              <button
-                onClick={() => {
-                  if (window.confirm("You must accept the Terms to use DishiStudio. Decline will log you out.")) {
-                    setIsLoggedIn(false);
-                    setUser(null);
-                    setShowTermsModal(false);
-                    setCurrentScreen('home');
-                    localStorage.removeItem('dishiUser');
-                  }
-                }}
-                className="px-6 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition-all"
-              >
-                Decline
-              </button>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={onAccept}
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-lg font-bold hover:shadow-lg transition-all"
+                >
+                  ✓ I Accept Terms & Privacy Policy
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm("You must accept the Terms to use DishiStudio. Decline will log you out.")) {
+                      setIsLoggedIn(false);
+                      setUser(null);
+                      setShowTermsModal(false);
+                      setCurrentScreen('home');
+                      localStorage.removeItem('dishiUser');
+                    }
+                  }}
+                  className="px-6 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition-all"
+                >
+                  Decline
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -2677,28 +2831,28 @@ const sendMealToFriends = async () => {
       {!isLoggedIn && currentScreen === 'home' && (
         <HomeScreen setCurrentScreen={setCurrentScreen} />
       )}
-      
+
       {!isLoggedIn && currentScreen === 'login' && (
-        <LoginScreen 
-          handleLogin={handleLogin} 
-          setCurrentScreen={setCurrentScreen} 
+        <LoginScreen
+          handleLogin={handleLogin}
+          setCurrentScreen={setCurrentScreen}
           loading={loading}
         />
       )}
-      
+
       {currentScreen === 'reset-password' && (
         <ResetPasswordScreen setCurrentScreen={setCurrentScreen} />
       )}
-      
+
       {/* 2. LOGGED IN APP STRUCTURE */}
       {isLoggedIn && (
         <>
           <NavBar user={user} />
-          
+
           <main className="flex-1 overflow-y-auto pb-20">
             {/* Logic: If just logged in or on suggestions, show suggestions */}
             {(currentScreen === 'suggestions' || currentScreen === 'login') && (
-              <SuggestionsScreen 
+              <SuggestionsScreen
                 maxMealBudget={maxMealBudget}
                 setMaxMealBudget={setMaxMealBudget}
                 selectedCategory={selectedCategory}
@@ -2712,17 +2866,17 @@ const sendMealToFriends = async () => {
                 trackActivity={trackActivity}
               />
             )}
-            
+
             {currentScreen === 'budget' && (
-  <BudgetScreen 
-    budget={budget} 
-    setBudget={setBudget} 
-    trackActivity={trackActivity} 
-  />
-)}
-            
+              <BudgetScreen
+                budget={budget}
+                setBudget={setBudget}
+                trackActivity={trackActivity}
+              />
+            )}
+
             {currentScreen === 'friends' && (
-              <FriendsScreen 
+              <FriendsScreen
                 user={user}
                 friends={friends}
                 friendRequests={friendRequests}
@@ -2737,55 +2891,57 @@ const sendMealToFriends = async () => {
                 setShowAddFriend={setShowAddFriend}
               />
             )}
-            
-{currentScreen === 'streaks' && (
-  <StreaksScreen friends={friends} user={user} />
-)}
 
-{/* SHARE */}
-{currentScreen === 'share' && (
-  <ShareScreen 
-    selectedMeal={selectedMeal}
-    friends={friends}
-    selectedFriendsForMeal={selectedFriendsForMeal}
-    setSelectedFriendsForMeal={setSelectedFriendsForMeal}
-    sendMealToFriends={sendMealToFriends}
-    setCurrentScreen={setCurrentScreen}
-  />
-)}
+            {currentScreen === 'streaks' && (
+              <StreaksScreen friends={friends} user={user} />
+            )}
+
+            {/* SHARE */}
+            {currentScreen === 'share' && (
+              <ShareScreen
+                selectedMeal={selectedMeal}
+                friends={friends}
+                selectedFriendsForMeal={selectedFriendsForMeal}
+                setSelectedFriendsForMeal={setSelectedFriendsForMeal}
+                sendMealToFriends={sendMealToFriends}
+                setCurrentScreen={setCurrentScreen}
+              />
+            )}
             {currentScreen === 'feedback' && (
-  <FeedbackScreen 
-    submitFeedback={submitFeedback} 
-    trackActivity={trackActivity} 
-  />
-)}
-{currentScreen === 'profile' && (
-  <ProfileScreen 
-    user={user}
-    handleDeleteAccount={handleDeleteAccount}
-    setShowTermsModal={setShowTermsModal}
-    setTermsText={setTermsText}
-    TERMS_OF_SERVICE={TERMS_OF_SERVICE}
-    PRIVACY_POLICY={PRIVACY_POLICY}
-  />
-)}
+              <FeedbackScreen
+                submitFeedback={submitFeedback}
+                trackActivity={trackActivity}
+              />
+            )}
+            {currentScreen === 'profile' && (
+              <ProfileScreen
+                user={user}
+                handleDeleteAccount={handleDeleteAccount}
+                setShowTermsModal={setShowTermsModal}
+                setTermsText={setTermsText}
+                TERMS_OF_SERVICE={TERMS_OF_SERVICE}
+                PRIVACY_POLICY={PRIVACY_POLICY}
+                notificationsEnabled={notificationsEnabled}
+                toggleNotifications={handleNotificationToggle}
+              />
+            )}
           </main>
 
           <BottomNav currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} />
-          <RecipeModal 
-            viewingRecipe={viewingRecipe} 
-            setViewingRecipe={setViewingRecipe} 
+          <RecipeModal
+            viewingRecipe={viewingRecipe}
+            setViewingRecipe={setViewingRecipe}
           />
           {isLoggedIn && (
-      <TermsModal 
-        isOpen={showTermsModal}
-        onAccept={handleAcceptTerms}
-        onClose={() => {
-          alert("You must accept Terms & Privacy Policy to use DishiStudio");
-          setShowTermsModal(true); // Keep it open
-        }}
-      />
-    )}
+            <TermsModal
+              isOpen={showTermsModal}
+              onAccept={handleAcceptTerms} // This connects the button to the function
+              onClose={() => {
+                alert("You must accept Terms & Privacy Policy to use DishiStudio");
+                setShowTermsModal(true);
+              }}
+            />
+          )}
         </>
       )}
     </div>
