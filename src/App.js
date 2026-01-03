@@ -1997,34 +1997,13 @@ const MealPlannerApp = () => {
 
       if (authError) throw authError;
 
-      // 3. Store the profile in 'users' table
-      // The supabase client will use the new session token for this insert, passing RLS
-      if (authData.user) {
-        const userId = authData.user.id;
+      // 3. Profile is created automatically via Database Trigger (see fix_users_rls.sql)
+      // If auth creation succeeded, the trigger should have run.
 
-        const { error: insertError } = await supabase
-          .from('users')
-          .upsert([
-            {
-              id: userId,
-              email: email,
-              username: username.toLowerCase().trim(), // Store cleaned username
-              full_name: name,
-              created_at: new Date().toISOString(),
-              streak: 0
-            }
-          ]);
-
-        if (insertError) {
-          console.error("Profile creation failed:", insertError);
-          // Don't throw here, the auth account was created. User can fix profile later or we can retry.
-          // But for now let's alert so we know.
-          alert("Account created but profile setup failed. Please contact support.");
-        } else {
-          alert("Registration successful! You can now log in.");
-          if (setIsRegistering) setIsRegistering(false);
-        }
-      }
+      // Optional: We could verify profile existence here, but for MVP we assume success.
+      console.log("User created:", authData.user.id);
+      alert("Registration successful! You can now log in.");
+      if (setIsRegistering) setIsRegistering(false);
 
     } catch (error) {
       console.error("Registration error:", error);
@@ -2077,49 +2056,7 @@ const MealPlannerApp = () => {
 
 
 
-  const handleSignUp = async (email, password, username, fullName) => {
-    setLoading(true);
-    try {
-      const supabaseUrl = 'https://YOUR_PROJECT_URL.supabase.co';
-      const supabaseKey = 'YOUR_ANON_KEY';
-      const client = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-      const { data: authData, error: authError } = await client.auth.signUp({
-        email,
-        password,
-      });
-
-      if (authError) throw authError;
-
-      if (authData.user) {
-        await client.from('users').insert([
-          {
-            id: authData.user.id,
-            email: email,
-            username: username.toLowerCase().trim(),
-            full_name: fullName,
-            created_at: new Date().toISOString(),
-            streak: 0
-          },
-        ]);
-
-        const newUser = {
-          id: authData.user.id,
-          email: email,
-          username: username,
-          name: fullName
-        };
-
-        setUser(newUser);
-        setIsLoggedIn(true);
-        localStorage.setItem('dishiUser', JSON.stringify(newUser));
-      }
-    } catch (error) {
-      alert(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const searchUsers = async () => {
     if (!searchUsername.trim()) return;

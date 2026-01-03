@@ -25,25 +25,48 @@ end $$;
 -- Enable RLS
 alter table public.users enable row level security;
 
--- DROP existing policies to clean up (in case they are broken)
+-- DROP existing policies to clean up
 drop policy if exists "Users can insert their own profile" on public.users;
 drop policy if exists "Users can view everyone" on public.users;
 drop policy if exists "Users can update their own profile" on public.users;
 
 -- CREATE proper policies
 
--- 1. INSERT: Allow a user to insert a row ONLY if the id matches their auth.uid()
-create policy "Users can insert their own profile"
-  on public.users for insert
-  with check (auth.uid() = id);
-
--- 2. SELECT: Allow everyone (even anon/unauthenticated if you want public profiles) to read profiles
--- If you want strict privacy, change `true` to `auth.role() = 'authenticated'`
+-- 1. VIEW: Allow everyone to read profiles (needed for friend search)
 create policy "Users can view everyone"
   on public.users for select
   using (true);
 
--- 3. UPDATE: Allow users to update ONLY their own rows
+-- 2. UPDATE: Allow users to update ONLY their own rows
 create policy "Users can update their own profile"
   on public.users for update
   using (auth.uid() = id);
+
+-- 3. INSERT: (Optional/Legacy) Allow insert if ID matches, but Trigger handles this main case
+create policy "Users can insert their own profile"
+  on public.users for insert
+  with check (auth.uid() = id);
+
+-- --- TRIGGER FOR NEW USERS ---
+-- This bypasses RLS issues by running as security definer on the server side
+
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.users (id, email, username, full_name, streak)
+  values (
+    new.id,
+    new.email,
+    new.raw_user_meta_data->>'user_name',
+    new.raw_user_meta_data->>'full_name',
+    0
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- Recreate the trigger
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
