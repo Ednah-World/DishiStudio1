@@ -1703,6 +1703,7 @@ const MealPlannerApp = () => {
         .insert([
           {
             user_id: user.id,
+            user_email: user.email,
             accepted: true,
             terms_version: '1.0'
           }
