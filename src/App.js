@@ -2004,7 +2004,7 @@ const MealPlannerApp = () => {
 
         const { error: insertError } = await supabase
           .from('users')
-          .insert([
+          .upsert([
             {
               id: userId,
               email: email,
