@@ -1705,7 +1705,8 @@ const MealPlannerApp = () => {
             user_id: user.id,
             user_email: user.email,
             accepted: true,
-            terms_version: '1.0'
+            terms_version: '1.0',
+            accepted_at: new Date().toISOString()
           }
         ])
         .select();
