@@ -151,7 +151,7 @@ const HomeScreen = ({ setCurrentScreen }) => (
     <div className="text-center relative z-10">
       <div className="text-8xl mb-6">🍽️</div>
       <h1 className="text-5xl font-bold text-black mb-4 drop-shadow-lg">DishiStudio</h1>
-      <p className="text-xl text-black mb-8 drop-shadow-md">Share meals, build streaks with friends</p>
+      <p className="text-xl text-black mb-8 drop-shadow-md">Eat affordably. Stay consistent.</p>
       <button
         onClick={() => setCurrentScreen('login')}
         className="bg-orange-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-orange-700 transition shadow-lg"
@@ -192,7 +192,7 @@ const FriendsScreen = ({
     <div className="pb-20">
       <div className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-6">
         <h2 className="text-3xl font-bold mb-2">Friends</h2>
-        <p className="opacity-90">Connect and share meals</p>
+        <p className="opacity-90">Share meals only with people you choose.</p>
       </div>
 
       <div className="p-4 max-w-4xl mx-auto">
@@ -490,8 +490,8 @@ const StreaksScreen = ({ friends, user }) => {
             {streakData.length === 0 ? (
               <div className="bg-white rounded-xl shadow-lg p-12 text-center">
                 <Flame className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-xl text-gray-600 mb-2 font-bold">No streaks yet</p>
-                <p className="text-gray-500">Share meals with friends to start building streaks!</p>
+                <p className="text-xl text-gray-600 mb-2 font-bold">No consistency yet</p>
+                <p className="text-gray-500">Add one meal today — that’s enough to start.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -582,7 +582,7 @@ const StreakItem = ({ friend }) => {
       {friend.streak > 0 && (
         <div className="mt-4 bg-orange-50 border-l-4 border-orange-500 rounded p-3">
           <p className="text-sm text-orange-800">
-            🔥 <strong>{friend.streak} day streak!</strong> Keep sharing meals daily.
+            🔥 <strong>{friend.streak} day streak!</strong> One meal a day keeps your streak alive.
           </p>
         </div>
       )}
@@ -590,7 +590,7 @@ const StreakItem = ({ friend }) => {
       {friend.totalShared === 0 && (
         <div className="mt-4 bg-gray-50 rounded p-3 text-center">
           <p className="text-sm text-gray-600">
-            No meals shared yet. Send a meal to start!
+            No meals logged yet. Add what you ate today.
           </p>
         </div>
       )}
@@ -996,44 +996,6 @@ const FeedbackScreen = ({ submitFeedback, trackActivity }) => {
             Submit Feedback
           </button>
         </div>
-
-        <div className="bg-white rounded-xl shadow-lg p-6 mt-6 border border-gray-50">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Quick Feedback</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => {
-                trackActivity('quick_feedback', { type: 'love_it', timestamp: new Date().toISOString() });
-                alert('Thanks for the love! ❤️');
-              }}
-              className="p-3 border-2 border-gray-100 rounded-lg font-medium hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
-              😊 Love it!
-            </button>
-            <button
-              onClick={() => {
-                trackActivity('quick_feedback', { type: 'need_more_meals', timestamp: new Date().toISOString() });
-                alert('Thanks! We\'ll add more meals soon! 🍽️');
-              }}
-              className="p-3 border-2 border-gray-100 rounded-lg font-medium hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
-              🤔 Need more meals
-            </button>
-            <button
-              onClick={() => {
-                trackActivity('quick_feedback', { type: 'budget_helpful', timestamp: new Date().toISOString() });
-                alert('Glad the budget feature helps! 💰');
-              }}
-              className="p-3 border-2 border-gray-100 rounded-lg font-medium hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
-              💰 Budget helpful
-            </button>
-            <button
-              onClick={() => {
-                trackActivity('quick_feedback', { type: 'love_streaks', timestamp: new Date().toISOString() });
-                alert('Keep those streaks going! 🔥');
-              }}
-              className="p-3 border-2 border-gray-100 rounded-lg font-medium hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
-              👥 Love streaks
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -1041,26 +1003,9 @@ const FeedbackScreen = ({ submitFeedback, trackActivity }) => {
 
 
 
-// --- NOTIFICATION HELPERS ---
 
-const urlBase64ToUint8Array = (base64String) => {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/\-/g, '+')
-    .replace(/_/g, '/');
 
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
-
-// ---------------------------
-
-const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, setTermsText, TERMS_OF_SERVICE, PRIVACY_POLICY, notificationsEnabled, toggleNotifications }) => {
+const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, setTermsText, TERMS_OF_SERVICE, PRIVACY_POLICY }) => {
   const [showDeleteSection, setShowDeleteSection] = useState(false);
 
   return (
@@ -1091,25 +1036,7 @@ const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, setTermsT
         </div>
 
         {/* --- NEW: SETTINGS SECTION --- */}
-        <div className="bg-white rounded-xl shadow-lg p-6 border border-blue-50">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Settings</h3>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-gray-800">Notifications</p>
-              <p className="text-sm text-gray-600">Get alerts for friends and streaks</p>
-            </div>
-            <button
-              onClick={toggleNotifications}
-              className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 focus:outline-none ${notificationsEnabled ? 'bg-green-500' : 'bg-gray-300'
-                }`}
-            >
-              <div
-                className={`bg-white w-6 h-6 rounded-full shadow-md transform duration-300 ${notificationsEnabled ? 'translate-x-6' : ''
-                  }`}
-              />
-            </button>
-          </div>
-        </div>
+
 
         {/* Terms & Privacy */}
         <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
@@ -1196,129 +1123,7 @@ const MealPlannerApp = () => {
   const searchRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
-  // Notification State
-  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
-    return localStorage.getItem('notifications_enabled') === 'true';
-  });
 
-  // --- NOTIFICATION HANDLERS ---
-
-  const handleNotificationToggle = async () => {
-    if (!notificationsEnabled) {
-      // Turn ON
-      const result = await Notification.requestPermission();
-      if (result === 'granted') {
-        setNotificationsEnabled(true);
-        localStorage.setItem('notifications_enabled', 'true');
-        subscribeToPush(); // Try to subscribe
-        alert("Notifications enabled! You'll get alerts even when the app is in the background.");
-      } else {
-        alert("Permission denied. We cannot send notifications.");
-      }
-    } else {
-      // Turn OFF
-      setNotificationsEnabled(false);
-      localStorage.setItem('notifications_enabled', 'false');
-      // Ideally unsubscribe from push here too
-      alert("Notifications disabled.");
-    }
-  };
-
-  const subscribeToPush = async () => {
-    if ('serviceWorker' in navigator && 'PushManager' in window && user?.id) {
-      try {
-        const registration = await navigator.serviceWorker.ready;
-
-        // VAPID Public Key - YOU NEED TO GENERATE THIS
-        // For now we use a dummy logic, user needs to replace this
-        const publicVapidKey = 'YOUR_PUBLIC_VAPID_KEY_HERE';
-
-        // This will only work if VAPID key is valid. 
-        // Failing gracefully if key is invalid/placeholder.
-        if (publicVapidKey === 'YOUR_PUBLIC_VAPID_KEY_HERE') {
-          console.log("VAPID Key not set. Push subscription skipped.");
-          return;
-        }
-
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
-        });
-
-        console.log('Push Subscription:', subscription);
-
-        // Save to DB
-        await supabaseFetch('push_subscriptions', '', 'POST', {
-          user_id: user.id,
-          subscription: subscription,
-          created_at: new Date().toISOString()
-        });
-
-      } catch (error) {
-        console.error('Failed to subscribe to push:', error);
-      }
-    }
-  };
-
-  // Realtime Listeners for Immediate "background tab" feedback
-  useEffect(() => {
-    if (!user?.id || !notificationsEnabled) return;
-
-    console.log("Setting up Realtime Listeners for Notifications...");
-
-    // 1. Friend Requests Listener
-    const requestChannel = supabase
-      .channel('public:friend_requests')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'friend_requests',
-        filter: `receiver_id=eq.${user.id}`
-      }, (payload) => {
-        new Notification("New Friend Request", {
-          body: "You have a new friend request!",
-          icon: "/logo192.png"
-        });
-      })
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'friend_requests',
-        filter: `sender_id=eq.${user.id}`
-      }, (payload) => {
-        if (payload.new.status === 'accepted') {
-          new Notification("Friend Request Accepted", {
-            body: "Your friend request was accepted!",
-            icon: "/logo192.png"
-          });
-        }
-      })
-      .subscribe();
-
-    // 2. Shared Meals / Activity Listener
-    const activityChannel = supabase
-      .channel('public:user_activity')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'user_activity',
-        filter: `receiver_id=eq.${user.id}`
-      }, (payload) => {
-        if (payload.new.action_type === 'share_meal') {
-          const mealName = payload.new.action_details?.meal_name || "a meal";
-          new Notification("New Shared Meal", {
-            body: `Someone shared ${mealName} with you!`,
-            icon: "/logo192.png"
-          });
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(requestChannel);
-      supabase.removeChannel(activityChannel);
-    };
-  }, [user?.id, notificationsEnabled]);
 
   // -----------------------------
 
@@ -1539,8 +1344,8 @@ const MealPlannerApp = () => {
   };
 
   const handleUpdatePassword = async (newPassword) => {
-    if (!newPassword || newPassword.length < 6) {
-      alert("Password must be at least 15 characters");
+    if (!newPassword || newPassword.length < 8) {
+      alert("Password must be at least 8 characters");
       return;
     }
 
@@ -1740,8 +1545,8 @@ const MealPlannerApp = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false); // NEW
 
     const handleSubmit = () => {
-      if (!newPassword || newPassword.length < 6) {
-        alert("Password must be at least 6 characters");
+      if (!newPassword || newPassword.length < 8) {
+        alert("Password must be at least 8 characters");
         return;
       }
 
@@ -1770,7 +1575,7 @@ const MealPlannerApp = () => {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter new password (min 6 characters)"
+                placeholder="Enter new password (min 8 characters)"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
@@ -1921,8 +1726,8 @@ const MealPlannerApp = () => {
           setTermsText={setTermsText}
           TERMS_OF_SERVICE={TERMS_OF_SERVICE}
           PRIVACY_POLICY={PRIVACY_POLICY}
-          notificationsEnabled={notificationsEnabled}
-          toggleNotifications={handleNotificationToggle}
+          notificationsEnabled={false} // Removed feature
+          toggleNotifications={() => { }} // Removed feature
         />;
       default:
         return <div className="p-4"><h3>Home Screen</h3></div>;
@@ -1977,8 +1782,8 @@ const MealPlannerApp = () => {
       return;
     }
 
-    if (password.length < 6) {
-      alert("Password must be at least 6 characters");
+    if (password.length < 8) {
+      alert("Password must be at least 8 characters");
       return;
     }
 
@@ -2060,24 +1865,39 @@ const MealPlannerApp = () => {
 
 
 
-  const searchUsers = async () => {
-    if (!searchUsername.trim()) return;
+  const searchUsers = async (queryText = searchUsername) => {
+    // Handle case where queryText is an Event object (from button click)
+    if (typeof queryText !== 'string') {
+      queryText = searchUsername;
+    }
+
+    // If empty, clear results
+    if (!queryText || !queryText.trim()) {
+      setSearchResults([]);
+      return;
+    }
 
     try {
-      // We call the database directly via URL
-      const query = `?username=ilike.*${searchUsername}*&select=id,username,full_name`;
+      // We call the database directly via URL using ILIKE for partial match
+      const query = `?username=ilike.*${queryText}*&select=id,username,full_name`;
       const data = await supabaseFetch('users', query);
 
-      if (data.length === 0) {
-        alert("No users found.");
-      }
-
-      setSearchResults(data);
+      setSearchResults(data || []);
     } catch (err) {
       console.error(err);
-      alert("Database Error: " + err.message);
+      // Silent error for live search, optionally set empty
+      setSearchResults([]);
     }
   };
+
+  // Live Search Effect (Debounced)
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      searchUsers(searchUsername);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchUsername]);
 
   const removeFriend = async (friendId) => {
     if (!window.confirm("Are you sure you want to remove this friend?")) return;
@@ -2540,7 +2360,7 @@ const MealPlannerApp = () => {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
+                placeholder={isRegistering ? "Enter password (min 8 chars)" : "Enter your password"}
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
                 className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
@@ -2880,8 +2700,6 @@ const MealPlannerApp = () => {
                 setTermsText={setTermsText}
                 TERMS_OF_SERVICE={TERMS_OF_SERVICE}
                 PRIVACY_POLICY={PRIVACY_POLICY}
-                notificationsEnabled={notificationsEnabled}
-                toggleNotifications={handleNotificationToggle}
               />
             )}
           </main>
