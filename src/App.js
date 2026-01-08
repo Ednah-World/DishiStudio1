@@ -102,7 +102,7 @@ We may suspend or terminate your account at any time for violation of these Term
 We may update these Terms periodically. Continued use of the App constitutes acceptance of the revised Terms.
 
 13. Contact
-For questions, contact: ednahmageria539@gmail.com`;
+For questions, contact: dishimember@gmail.com`;
 
 const PRIVACY_POLICY = `Privacy Policy (DishiStudio MVP)
 Last updated: 1st January, 2026
@@ -144,7 +144,7 @@ The App is not intended for children under 13. We do not knowingly collect data 
 We may update this Privacy Policy as the App evolves. Updates will be posted in the App.
 
 9. Contact
-For privacy questions, contact: ednahmageria539@gmail.com`;
+For privacy questions, contact: dishimember@gmail.com`;
 
 const HomeScreen = ({ setCurrentScreen }) => (
   <div className="min-h-screen bg-gradient-to-b from-orange-100 to-pink-100 flex items-center justify-center p-4 pb-24">
