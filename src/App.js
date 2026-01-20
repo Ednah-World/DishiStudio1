@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Home, Users, DollarSign, Flame, MessageSquare, Share2, TrendingUp, X } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Home, Users, DollarSign, Flame, MessageSquare, TrendingUp, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
 // Supabase Configuration
@@ -31,7 +31,7 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 
 // --- DATABASE CONNECTION END ---
 // This connects your old function calls to our new fetcher
-const sendToSupabase = supabaseFetch;
+
 
 const TERMS_OF_SERVICE = `Terms of Service (DishiStudio MVP)
 Last updated: 1st January, 2026
@@ -1005,7 +1005,7 @@ const FeedbackScreen = ({ submitFeedback, trackActivity }) => {
 
 
 
-const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, setTermsText, TERMS_OF_SERVICE, PRIVACY_POLICY }) => {
+const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, TERMS_OF_SERVICE, PRIVACY_POLICY }) => {
   const [showDeleteSection, setShowDeleteSection] = useState(false);
 
   return (
@@ -1044,7 +1044,7 @@ const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, setTermsT
           <div className="space-y-2">
             <button
               onClick={() => {
-                setTermsText(TERMS_OF_SERVICE);
+                // setTermsText(TERMS_OF_SERVICE);
                 setShowTermsModal(true);
               }}
               className="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all"
@@ -1054,7 +1054,7 @@ const ProfileScreen = ({ user, handleDeleteAccount, setShowTermsModal, setTermsT
             </button>
             <button
               onClick={() => {
-                setTermsText(PRIVACY_POLICY);
+                // setTermsText(PRIVACY_POLICY);
                 setShowTermsModal(true);
               }}
               className="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all"
@@ -1223,7 +1223,7 @@ const MealPlannerApp = () => {
     { id: 61, name: 'Chapati & Beef', description: 'Chapati served with beef stew', budget: 200, category: 'Lunch', ingredients: ['Wheat flour', 'Beef', 'Onion', 'Tomato'], recipe: '1. Prepare chapati. 2. Cook beef stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'A popular town and home meal especially on weekends', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true }
   ];
 
-  const [allMeals, setAllMeals] = useState(mealsData);
+  const [allMeals] = useState(mealsData);
   const [selectedMeal, setSelectedMeal] = useState(null);
   const [budget, setBudget] = useState(5000);
   const [maxMealBudget, setMaxMealBudget] = useState(250);
@@ -1231,8 +1231,8 @@ const MealPlannerApp = () => {
   const [viewingRecipe, setViewingRecipe] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [mealHistory, setMealHistory] = useState([]);
-  const [showRepeatNotification, setShowRepeatNotification] = useState(false);
-  const [suggestedAlternatives, setSuggestedAlternatives] = useState([]);
+
+
 
   const filteredMeals = allMeals.filter(meal => {
     const withinBudget = meal.budget <= maxMealBudget;
@@ -1262,10 +1262,9 @@ const MealPlannerApp = () => {
   const [searchUsername, setSearchUsername] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [selectedFriendsForMeal, setSelectedFriendsForMeal] = useState([]);
-  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
+
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [termsText, setTermsText] = useState('');
-  const [policyText, setPolicyText] = useState('');
+
   const [checkingTerms, setCheckingTerms] = useState(true);
 
   React.useEffect(() => {
@@ -1484,7 +1483,7 @@ const MealPlannerApp = () => {
 
       console.log("Terms accepted check:", accepted); // Verify this says 'true' in console
 
-      setHasAcceptedTerms(accepted);
+
 
       // 3. Only show modal if accepted is false
       if (!accepted) {
@@ -1524,7 +1523,7 @@ const MealPlannerApp = () => {
 
       if (data) {
         console.log("DB Update Success:", data);
-        setHasAcceptedTerms(true);
+
         setShowTermsModal(false);
       }
     } catch (error) {
@@ -1723,7 +1722,7 @@ const MealPlannerApp = () => {
           user={user}
           handleDeleteAccount={handleDeleteAccount}
           setShowTermsModal={setShowTermsModal}
-          setTermsText={setTermsText}
+
           TERMS_OF_SERVICE={TERMS_OF_SERVICE}
           PRIVACY_POLICY={PRIVACY_POLICY}
           notificationsEnabled={false} // Removed feature
@@ -1734,46 +1733,7 @@ const MealPlannerApp = () => {
     }
   };
 
-  const findSimilarMeals = (meal) => {
-    // Find meals that are similar but not the same
-    const similar = allMeals.filter(m => {
-      if (m.id === meal.id) return false;
 
-      // Calculate similarity score
-      let score = 0;
-
-      // Same category
-      if (m.category === meal.category) score += 3;
-
-      // Similar budget (within 30%)
-      const budgetDiff = Math.abs(m.budget - meal.budget) / meal.budget;
-      if (budgetDiff <= 0.3) score += 2;
-
-      // Similar health score
-      if (Math.abs(m.healthScore - meal.healthScore) <= 1) score += 1;
-
-      // Shared ingredients
-      const sharedIngredients = m.ingredients.filter(ing =>
-        meal.ingredients.some(mealIng =>
-          ing.toLowerCase().includes(mealIng.toLowerCase()) ||
-          mealIng.toLowerCase().includes(ing.toLowerCase())
-        )
-      ).length;
-      score += sharedIngredients;
-
-      // Similar health attributes
-      if (m.veg === meal.veg) score += 0.5;
-      if (m.leg === meal.leg) score += 0.5;
-      if (m.protein === meal.protein) score += 0.5;
-      if (m.lowSugar === meal.lowSugar) score += 0.5;
-      if (m.lowSalt === meal.lowSalt) score += 0.5;
-
-      return score >= 3; // Threshold for similarity
-    });
-
-    // Sort by similarity and return top 3
-    return similar.slice(0, 3);
-  };
 
   const handleRegister = async (name, email, password, username, setIsRegistering) => {
     // 1. Basic Validation
@@ -1825,11 +1785,9 @@ const MealPlannerApp = () => {
 
     if (existingMeal) {
       // Meal has been taken before
-      setShowRepeatNotification(true);
 
-      // Find similar alternatives
-      const alternatives = findSimilarMeals(meal);
-      setSuggestedAlternatives(alternatives);
+
+
 
       // Update meal count
       setMealHistory(mealHistory.map(m =>
@@ -1865,7 +1823,7 @@ const MealPlannerApp = () => {
 
 
 
-  const searchUsers = async (queryText = searchUsername) => {
+  const searchUsers = useCallback(async (queryText = searchUsername) => {
     // Handle case where queryText is an Event object (from button click)
     if (typeof queryText !== 'string') {
       queryText = searchUsername;
@@ -1888,7 +1846,7 @@ const MealPlannerApp = () => {
       // Silent error for live search, optionally set empty
       setSearchResults([]);
     }
-  };
+  }, [searchUsername]);
 
   // Live Search Effect (Debounced)
   useEffect(() => {
@@ -1897,7 +1855,110 @@ const MealPlannerApp = () => {
     }, 500); // 500ms delay
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchUsername]);
+  }, [searchUsername, searchUsers]);
+
+  const fetchFriends = useCallback(async (userId) => {
+    if (!userId) {
+      userId = user?.id;
+    }
+
+    if (!userId) return;
+
+    try {
+      // Get all accepted friendships
+      const query = `?status=eq.accepted&or=(sender_id.eq.${userId},receiver_id.eq.${userId})&select=id,sender_id,receiver_id`;
+      const data = await supabaseFetch('friendships', query);
+
+      if (!data || data.length === 0) {
+        setFriends([]);
+        return;
+      }
+
+      // Get friend profiles
+      const formatted = await Promise.all(
+        data.map(async (f) => {
+          const friendId = f.sender_id === userId ? f.receiver_id : f.sender_id;
+          const friendQuery = `?id=eq.${friendId}&select=id,username,full_name`;
+          const friendData = await supabaseFetch('users', friendQuery);
+
+          if (friendData && friendData[0]) {
+            return {
+              id: friendData[0].id,
+              name: friendData[0].full_name || friendData[0].username,
+              username: friendData[0].username,
+              avatar: '🥗',
+              streak: 0
+            };
+          }
+          return null;
+        })
+      );
+
+      setFriends(formatted.filter(f => f !== null));
+    } catch (err) {
+      console.error("Fetch Friends Error:", err);
+      setFriends([]);
+    }
+  }, [user]);
+
+  const fetchFriendRequests = useCallback(async (userId) => {
+    console.log("🔍 fetchFriendRequests called with userId:", userId);
+
+    if (!userId) {
+      console.log("❌ No userId provided");
+      return;
+    }
+
+    try {
+      // Build the URL manually for debugging
+      const query = `?receiver_id=eq.${userId}&status=eq.pending&select=*`;
+      const url = `${supabaseUrl}/rest/v1/friend_requests${query}`;
+
+      console.log("📡 Fetching from:", url);
+
+      const response = await fetch(url, {
+        headers: {
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      console.log("📦 Raw friend_requests data:", data);
+
+      if (!data || data.length === 0) {
+        console.log("⚠️ No pending requests found");
+        setFriendRequests([]);
+        return;
+      }
+
+      // Get sender details for each request
+      const formatted = await Promise.all(
+        data.map(async (req) => {
+          console.log("👤 Fetching sender details for:", req.sender_id);
+
+          const senderQuery = `?id=eq.${req.sender_id}&select=id,username,full_name`;
+          const senderData = await supabaseFetch('users', senderQuery);
+
+          console.log("👤 Sender data:", senderData);
+
+          return {
+            ...req,
+            sender_name: senderData?.[0]?.full_name || 'Unknown User',
+            sender_username: senderData?.[0]?.username || 'unknown'
+          };
+        })
+      );
+
+      console.log("✅ Formatted friend requests:", formatted);
+      setFriendRequests(formatted);
+
+    } catch (error) {
+      console.error('❌ Error fetching requests:', error);
+      setFriendRequests([]);
+    }
+  }, []);
 
   const removeFriend = async (friendId) => {
     if (!window.confirm("Are you sure you want to remove this friend?")) return;
@@ -2031,110 +2092,11 @@ const MealPlannerApp = () => {
       setFriends([]);
       setFriendRequests([]);
     }
-  }, [user]);
+  }, [user, fetchFriends, fetchFriendRequests]);
 
-  const fetchFriends = async (userId) => {
-    if (!userId) {
-      userId = user?.id;
-    }
 
-    if (!userId) return;
 
-    try {
-      // Get all accepted friendships
-      const query = `?status=eq.accepted&or=(sender_id.eq.${userId},receiver_id.eq.${userId})&select=id,sender_id,receiver_id`;
-      const data = await supabaseFetch('friendships', query);
 
-      if (!data || data.length === 0) {
-        setFriends([]);
-        return;
-      }
-
-      // Get friend profiles
-      const formatted = await Promise.all(
-        data.map(async (f) => {
-          const friendId = f.sender_id === userId ? f.receiver_id : f.sender_id;
-          const friendQuery = `?id=eq.${friendId}&select=id,username,full_name`;
-          const friendData = await supabaseFetch('users', friendQuery);
-
-          if (friendData && friendData[0]) {
-            return {
-              id: friendData[0].id,
-              name: friendData[0].full_name || friendData[0].username,
-              username: friendData[0].username,
-              avatar: '🥗',
-              streak: 0
-            };
-          }
-          return null;
-        })
-      );
-
-      setFriends(formatted.filter(f => f !== null));
-    } catch (err) {
-      console.error("Fetch Friends Error:", err);
-      setFriends([]);
-    }
-  };
-
-  const fetchFriendRequests = async (userId) => {
-    console.log("🔍 fetchFriendRequests called with userId:", userId);
-
-    if (!userId) {
-      console.log("❌ No userId provided");
-      return;
-    }
-
-    try {
-      // Build the URL manually for debugging
-      const query = `?receiver_id=eq.${userId}&status=eq.pending&select=*`;
-      const url = `${supabaseUrl}/rest/v1/friend_requests${query}`;
-
-      console.log("📡 Fetching from:", url);
-
-      const response = await fetch(url, {
-        headers: {
-          'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-      console.log("📦 Raw friend_requests data:", data);
-
-      if (!data || data.length === 0) {
-        console.log("⚠️ No pending requests found");
-        setFriendRequests([]);
-        return;
-      }
-
-      // Get sender details for each request
-      const formatted = await Promise.all(
-        data.map(async (req) => {
-          console.log("👤 Fetching sender details for:", req.sender_id);
-
-          const senderQuery = `?id=eq.${req.sender_id}&select=id,username,full_name`;
-          const senderData = await supabaseFetch('users', senderQuery);
-
-          console.log("👤 Sender data:", senderData);
-
-          return {
-            ...req,
-            sender_name: senderData?.[0]?.full_name || 'Unknown User',
-            sender_username: senderData?.[0]?.username || 'unknown'
-          };
-        })
-      );
-
-      console.log("✅ Formatted friend requests:", formatted);
-      setFriendRequests(formatted);
-
-    } catch (error) {
-      console.error('❌ Error fetching requests:', error);
-      setFriendRequests([]);
-    }
-  };
 
   const selectMeal = (meal) => {
     trackMeal(meal);
@@ -2697,7 +2659,7 @@ const MealPlannerApp = () => {
                 user={user}
                 handleDeleteAccount={handleDeleteAccount}
                 setShowTermsModal={setShowTermsModal}
-                setTermsText={setTermsText}
+
                 TERMS_OF_SERVICE={TERMS_OF_SERVICE}
                 PRIVACY_POLICY={PRIVACY_POLICY}
               />
