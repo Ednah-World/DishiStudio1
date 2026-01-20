@@ -351,13 +351,7 @@ const StreaksScreen = ({ friends, user }) => {
   const [streakData, setStreakData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchStreakData();
-    }
-  }, [user, friends]);
-
-  const fetchStreakData = async () => {
+  const fetchStreakData = useCallback(async () => {
     if (!user?.id) return;
 
     setLoading(true);
@@ -420,7 +414,13 @@ const StreaksScreen = ({ friends, user }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, friends]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchStreakData();
+    }
+  }, [user, friends, fetchStreakData]);
 
   const calculateStreak = (sent, received) => {
     // Group activities by date
@@ -1265,7 +1265,7 @@ const MealPlannerApp = () => {
 
   const [showTermsModal, setShowTermsModal] = useState(false);
 
-  const [checkingTerms, setCheckingTerms] = useState(true);
+
 
   React.useEffect(() => {
     localStorage.setItem('friendRequests', JSON.stringify(friendRequests));
@@ -1684,54 +1684,7 @@ const MealPlannerApp = () => {
     }
   };
 
-  const renderContent = () => {
-    // If not logged in, the main logic should handle the Login/Signup screen
-    if (!isLoggedIn) return null;
 
-    switch (currentScreen) {
-      case 'home':
-        return (
-          <div className="p-4">
-            <h2 className="text-xl font-bold mb-4">Welcome back, {user?.name}!</h2>
-            {/* Add your Dashboard/Main content here */}
-            <div className="bg-orange-50 p-6 rounded-2xl border-2 border-orange-100">
-              <p className="text-orange-800">Select a meal to get started with your streak!</p>
-            </div>
-          </div>
-        );
-      case 'planner':
-        return <div className="p-4"><h3>Meal Planner Screen</h3></div>;
-      case 'friends':
-        // This is where your Friend Request UI from earlier goes
-        return <FriendsScreen
-          user={user}
-          friends={friends}
-          friendRequests={friendRequests}
-          handleFriendRequest={handleFriendRequest} // Pass the handler
-          sendFriendRequest={sendFriendRequest}     // Pass the handler
-          removeFriend={removeFriend}               // Pass the handler
-          searchUsers={searchUsers}                 // Pass the handler
-          searchUsername={searchUsername}           // Pass value
-          setSearchUsername={setSearchUsername}     // Pass setter
-          searchResults={searchResults}             // Pass results
-          showAddFriend={showAddFriend}             // Pass toggle
-          setShowAddFriend={setShowAddFriend}       // Pass setter
-        />;
-      case 'profile':
-        return <ProfileScreen
-          user={user}
-          handleDeleteAccount={handleDeleteAccount}
-          setShowTermsModal={setShowTermsModal}
-
-          TERMS_OF_SERVICE={TERMS_OF_SERVICE}
-          PRIVACY_POLICY={PRIVACY_POLICY}
-          notificationsEnabled={false} // Removed feature
-          toggleNotifications={() => { }} // Removed feature
-        />;
-      default:
-        return <div className="p-4"><h3>Home Screen</h3></div>;
-    }
-  };
 
 
 
