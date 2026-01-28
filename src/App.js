@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import { Home, Users, DollarSign, Flame, MessageSquare, TrendingUp, X } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { Home, Users, DollarSign, Flame, MessageSquare, TrendingUp, X, Calendar, Trash2 } from 'lucide-react';
+
+
 
 // Supabase Configuration
 const supabaseUrl = 'https://ltrdgyraevtxwroukxkt.supabase.co';
@@ -8,10 +9,14 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 const supabaseFetch = async (tableName, query = '', method = 'GET', body = null) => {
   try {
+    // Get the active session token
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token || supabaseAnonKey;
+
     const url = `${supabaseUrl}/rest/v1/${tableName}${query}`;
     const headers = {
       'apikey': supabaseAnonKey,
-      'Authorization': `Bearer ${supabaseAnonKey}`,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
       'Prefer': 'return=representation'
     };
@@ -19,10 +24,17 @@ const supabaseFetch = async (tableName, query = '', method = 'GET', body = null)
     if (body) options.body = JSON.stringify(body);
     const response = await fetch(url, options);
     if (response.status === 204) return null;
+
+    // Check for errors
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || errorData.msg || 'Database request failed');
+    }
+
     return await response.json();
   } catch (e) {
     console.error("Database Error:", e);
-    return null;
+    throw e; // Re-throw so callers know it failed
   }
 };
 
@@ -145,6 +157,200 @@ We may update this Privacy Policy as the App evolves. Updates will be posted in 
 
 9. Contact
 For privacy questions, contact: dishimember@gmail.com`;
+
+const WeekPlannerScreen = ({ user, maxMealBudget, trackActivity, mealHistory }) => {
+  const [plannedMeals, setPlannedMeals] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPlannedMeals = React.useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    try {
+      // Fetch ALL planned meals, not just limited to current week
+      const query = `?user_id=eq.${user.id}&action_type=eq.plan_meal&select=*&order=created_at.desc`;
+      const data = await supabaseFetch('user_activity', query);
+      setPlannedMeals(data || []);
+    } catch (err) {
+      console.error("Error fetching planned meals:", err);
+      setPlannedMeals([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchPlannedMeals();
+  }, [fetchPlannedMeals]);
+
+  const removePlannedMeal = async (activityId, mealName) => {
+    if (!window.confirm(`Remove ${mealName} from your plan?`)) return;
+
+    try {
+      // DELETE returns the deleted rows because of Prefer: return=representation in supabaseFetch
+      const result = await supabaseFetch('user_activity', `?id=eq.${activityId}`, 'DELETE');
+
+      // If result is empty array, nothing was deleted (e.g., RLS denied it)
+      if (!result || result.length === 0) {
+        throw new Error("Permission denied or item not found");
+      }
+
+      setPlannedMeals(prev => prev.filter(item => item.id !== activityId));
+      trackActivity('remove_planned_meal', { meal_name: mealName });
+    } catch (err) {
+      console.error("Error removing meal:", err);
+      alert("Failed to remove meal: " + err.message);
+    }
+  };
+
+  // Group meals by Week (Sunday start)
+  const groupedWeeks = React.useMemo(() => {
+    const groups = {};
+    plannedMeals.forEach(meal => {
+      const date = new Date(meal.created_at);
+      const day = date.getDay(); // 0 = Sunday
+      const diff = date.getDate() - day; // adjust when day is sunday
+      const weekStart = new Date(date);
+      weekStart.setDate(diff);
+      weekStart.setHours(0, 0, 0, 0);
+
+      const key = weekStart.toISOString();
+      if (!groups[key]) {
+        groups[key] = {
+          startDate: weekStart,
+          items: [],
+          totalBudget: 0
+        };
+      }
+      groups[key].items.push(meal);
+      groups[key].totalBudget += (meal.action_details?.budget || 0);
+    });
+
+    // Sort weeks descending (newest first)
+    return Object.values(groups).sort((a, b) => b.startDate - a.startDate);
+  }, [plannedMeals]);
+
+  // Calculate most eaten meal globally
+  const mostEatenMeal = React.useMemo(() => {
+    if (!mealHistory || mealHistory.length === 0) return null;
+    return mealHistory.reduce((prev, current) => (prev.count > current.count) ? prev : current);
+  }, [mealHistory]);
+
+  return (
+    <div className="pb-24">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
+        <h2 className="text-3xl font-bold mb-2">Weekly Eats</h2>
+        <p className="opacity-90">See what you eat day to day</p>
+      </div>
+
+      <div className="p-4 max-w-4xl mx-auto space-y-8">
+        {/* Global Stats */}
+        <div className="bg-white rounded-xl shadow p-4 border-l-4 border-green-500 flex justify-between items-center">
+          <div>
+            <p className="text-gray-500 text-xs uppercase font-bold">All-Time Favorite</p>
+            <p className="text-xl font-bold text-green-600">
+              {mostEatenMeal ? mostEatenMeal.name : '—'}
+            </p>
+          </div>
+          {mostEatenMeal && (
+            <div className="text-right">
+              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">
+                {mostEatenMeal.count} times
+              </span>
+            </div>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="text-center py-10 text-gray-500">Loading history...</div>
+        ) : groupedWeeks.length === 0 ? (
+          <div className="text-center py-10">
+            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500">No meals planned yet. Start adding from Home!</p>
+          </div>
+        ) : (
+          groupedWeeks.map((week, idx) => {
+            // Group items by Day within this week
+            const days = {};
+            week.items.forEach(item => {
+              const dayDate = new Date(item.created_at).toDateString();
+              if (!days[dayDate]) days[dayDate] = [];
+              days[dayDate].push(item);
+            });
+
+            // Sort days Sun -> Sat
+            const sortedDays = Object.keys(days).sort((a, b) => new Date(a) - new Date(b));
+
+            const endDate = new Date(week.startDate);
+            endDate.setDate(week.startDate.getDate() + 6);
+
+            return (
+              <div key={idx} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                <div className="bg-gray-50 p-4 border-b flex justify-between items-center">
+                  <div className="flex flex-col">
+                    <h3 className="font-bold text-gray-800">
+                      Week of {week.startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </h3>
+                    <span className="text-xs text-gray-500">
+                      To {endDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500 font-bold uppercase">Total Spend</p>
+                    <p className="text-lg text-blue-600 font-bold">KSh {week.totalBudget}</p>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-gray-100">
+                  {sortedDays.map(dayKey => (
+                    <div key={dayKey} className="flex flex-col sm:flex-row border-b last:border-0 hover:bg-gray-50 transition-colors">
+                      {/* Date Column */}
+                      <div className="p-4 sm:w-32 bg-gray-50/50 sm:border-r border-gray-100 flex flex-col justify-center">
+                        <span className="text-sm font-bold text-gray-700">
+                          {new Date(dayKey).toLocaleDateString(undefined, { weekday: 'short' })}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {new Date(dayKey).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+
+                      {/* Meals Column */}
+                      <div className="flex-1 p-2 space-y-2">
+                        {days[dayKey].map(item => (
+                          <div key={item.id} className="flex justify-between items-center p-2 bg-white rounded border border-gray-100 shadow-sm">
+                            <div className="flex items-center gap-3">
+                              <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded w-16 text-center
+                                                        ${item.action_details?.meal_type === 'Breakfast' ? 'bg-orange-100 text-orange-700' :
+                                  item.action_details?.meal_type === 'Lunch' ? 'bg-blue-100 text-blue-700' :
+                                    item.action_details?.meal_type === 'Dinner' ? 'bg-purple-100 text-purple-700' :
+                                      'bg-gray-100 text-gray-600'}`}>
+                                {item.action_details?.meal_type || 'Meal'}
+                              </span>
+                              <div>
+                                <p className="font-semibold text-gray-800 text-sm">{item.action_details?.meal_name}</p>
+                                <p className="text-xs text-green-600 font-bold">KSh {item.action_details?.budget}</p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => removePlannedMeal(item.id, item.action_details?.meal_name)}
+                              className="text-gray-300 hover:text-red-500 p-2 transition-colors"
+                              aria-label="Remove meal"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+};
 
 const HomeScreen = ({ setCurrentScreen }) => (
   <div className="min-h-screen bg-gradient-to-b from-orange-100 to-pink-100 flex items-center justify-center p-4 pb-24">
@@ -949,6 +1155,33 @@ const SuggestionsScreen = ({
                   <button onClick={() => setViewingRecipe(meal)} className="flex-1 bg-blue-500 text-white py-2 rounded-lg font-bold">
                     View
                   </button>
+                  <button
+                    onClick={() => {
+                      // Custom prompt or simple window.prompt for now to stick to "don't complicate"
+                      // but user asked for B/L/D insert.
+                      const type = window.prompt("Is this for:\nB - Breakfast\nL - Lunch\nD - Dinner", "L");
+                      if (!type) return; // Cancelled
+
+                      let mealType = 'Lunch';
+                      const t = type.toUpperCase().charAt(0);
+                      if (t === 'B') mealType = 'Breakfast';
+                      else if (t === 'D') mealType = 'Dinner';
+                      else if (t === 'L') mealType = 'Lunch';
+                      else mealType = 'Other';
+
+                      trackActivity('plan_meal', {
+                        meal_id: meal.id,
+                        meal_name: meal.name,
+                        budget: meal.budget,
+                        category: meal.category,
+                        meal_type: mealType // NEW
+                      });
+                      alert(`Added ${meal.name} as ${mealType} to your plan!`);
+                    }}
+                    className="flex-1 bg-gray-800 text-white py-2 rounded-lg font-bold hover:bg-gray-900"
+                  >
+                    Select
+                  </button>
                   <button onClick={() => { selectMeal(meal); setCurrentScreen('share'); }} className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white py-2 rounded-lg font-bold">
                     Share
                   </button>
@@ -1264,6 +1497,7 @@ const MealPlannerApp = () => {
   const [selectedFriendsForMeal, setSelectedFriendsForMeal] = useState([]);
 
   const [showTermsModal, setShowTermsModal] = useState(false);
+
 
 
 
@@ -2185,6 +2419,10 @@ const MealPlannerApp = () => {
           <Home className="w-6 h-6" />
           <span className="text-xs mt-1">Home</span>
         </button>
+        <button onClick={() => { setCurrentScreen('week-planner'); trackActivity('navigate', { screen: 'week-planner' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
+          <Calendar className="w-6 h-6" />
+          <span className="text-xs mt-1">Week</span>
+        </button>
         <button onClick={() => { setCurrentScreen('budget'); trackActivity('navigate', { screen: 'budget' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
           <DollarSign className="w-6 h-6" />
           <span className="text-xs mt-1">Budget</span>
@@ -2590,6 +2828,15 @@ const MealPlannerApp = () => {
               <StreaksScreen friends={friends} user={user} />
             )}
 
+            {currentScreen === 'week-planner' && (
+              <WeekPlannerScreen
+                user={user}
+                maxMealBudget={maxMealBudget}
+                trackActivity={trackActivity}
+                mealHistory={mealHistory}
+              />
+            )}
+
             {/* SHARE */}
             {currentScreen === 'share' && (
               <ShareScreen
@@ -2627,17 +2874,20 @@ const MealPlannerApp = () => {
           {isLoggedIn && (
             <TermsModal
               isOpen={showTermsModal}
-              onAccept={handleAcceptTerms} // This connects the button to the function
+              onAccept={handleAcceptTerms}
               onClose={() => {
                 alert("You must accept Terms & Privacy Policy to use DishiStudio");
                 setShowTermsModal(true);
               }}
             />
           )}
+
         </>
       )}
+
     </div>
   );
 };
+
 
 export default MealPlannerApp;
