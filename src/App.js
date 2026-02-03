@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Home, Users, DollarSign, Flame, MessageSquare, TrendingUp, X, Calendar, Trash2 } from 'lucide-react';
-
+import { Home, DollarSign, MessageSquare, X, Calendar, Trash2 } from 'lucide-react';
+// add Users, Flame and TrendingUp in line 2, in the brackets,  when friendships are returned.
 
 
 // Supabase Configuration
@@ -368,6 +368,7 @@ const HomeScreen = ({ setCurrentScreen }) => (
   </div>
 );
 
+/*
 const FriendsScreen = ({
   user,
   friends,
@@ -402,7 +403,7 @@ const FriendsScreen = ({
       </div>
 
       <div className="p-4 max-w-4xl mx-auto">
-        {/* --- SECTION 1: INCOMING REQUESTS --- */}
+        {/* --- SECTION 1: INCOMING REQUESTS --- }
         {myPendingRequests.length > 0 && (
           <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 mb-4">
             <h3 className="text-xl font-bold text-gray-800 mb-4">
@@ -435,7 +436,7 @@ const FriendsScreen = ({
           </div>
         )}
 
-        {/* --- SECTION 2: SEARCH & ADD FRIENDS --- */}
+        {/* --- SECTION 2: SEARCH & ADD FRIENDS --- }
         {!showAddFriend && friends.length === 0 && myPendingRequests.length === 0 && (
           <div className="bg-white rounded-xl shadow-md p-12 text-center mb-4">
             <p className="text-xl text-gray-600 mb-2 font-bold">No friends yet</p>
@@ -524,7 +525,7 @@ const FriendsScreen = ({
           </div>
         )}
 
-        {/* --- SECTION 3: FRIENDS LIST --- */}
+        {/* --- SECTION 3: FRIENDS LIST --- }
         {friends.length > 0 && (
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-gray-800">My Friends ({friends.length})</h3>
@@ -552,7 +553,9 @@ const FriendsScreen = ({
     </div>
   );
 };
+*/
 
+/*
 const StreaksScreen = ({ friends, user }) => {
   const [streakData, setStreakData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -715,13 +718,15 @@ const StreaksScreen = ({ friends, user }) => {
     </div>
   );
 };
+*/
 
+/*
 const StreakItem = ({ friend }) => {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
-      {/* Header */}
+      {/* Header * }
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <span className="text-3xl">{friend.avatar || '🥗'}</span>
@@ -736,7 +741,7 @@ const StreakItem = ({ friend }) => {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats * }
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="bg-blue-50 rounded-lg p-3 text-center">
           <p className="text-xs text-gray-600">Sent</p>
@@ -752,7 +757,7 @@ const StreakItem = ({ friend }) => {
         </div>
       </div>
 
-      {/* Toggle Button for Details */}
+      {/* Toggle Button for Details * }
       {friend.recentMeals && friend.recentMeals.length > 0 && (
         <button
           onClick={() => setShowDetails(!showDetails)}
@@ -763,7 +768,7 @@ const StreakItem = ({ friend }) => {
         </button>
       )}
 
-      {/* Recent Meals (Collapsible) */}
+      {/* Recent Meals (Collapsible) * }
       {showDetails && friend.recentMeals && friend.recentMeals.length > 0 && (
         <div className="mt-4 border-t pt-4 animate-fade-in">
           <p className="text-sm font-bold text-gray-700 mb-2">Recent Meals Shared:</p>
@@ -784,7 +789,7 @@ const StreakItem = ({ friend }) => {
         </div>
       )}
 
-      {/* Streak Info */}
+      {/* Streak Info * }
       {friend.streak > 0 && (
         <div className="mt-4 bg-orange-50 border-l-4 border-orange-500 rounded p-3">
           <p className="text-sm text-orange-800">
@@ -803,8 +808,10 @@ const StreakItem = ({ friend }) => {
     </div>
   );
 };
+*/
 
 
+/*
 const ShareScreen = ({
   selectedMeal,
   friends,
@@ -905,6 +912,7 @@ const ShareScreen = ({
     </div>
   );
 };
+*/
 
 const BudgetScreen = ({ budget, setBudget, trackActivity }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -1178,13 +1186,11 @@ const SuggestionsScreen = ({
                       });
                       alert(`Added ${meal.name} as ${mealType} to your plan!`);
                     }}
-                    className="flex-1 bg-gray-800 text-white py-2 rounded-lg font-bold hover:bg-gray-900"
+                    className="flex-1 bg-green-400 text-white py-2 rounded-lg font-bold hover:bg-green-500"
                   >
                     Select
                   </button>
-                  <button onClick={() => { selectMeal(meal); setCurrentScreen('share'); }} className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white py-2 rounded-lg font-bold">
-                    Share
-                  </button>
+                
                 </div>
               </div>
             ))}
@@ -1194,6 +1200,9 @@ const SuggestionsScreen = ({
     </div>
   );
 };
+/* <button onClick={() => { selectMeal(meal); setCurrentScreen('share'); }} className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white py-2 rounded-lg font-bold">
+                    Share
+                  </button>  This part should come afetr select when i return friendships*/
 
 const FeedbackScreen = ({ submitFeedback, trackActivity }) => {
   const [feedback, setFeedback] = useState('');
@@ -1393,31 +1402,31 @@ const MealPlannerApp = () => {
   }, []);
 
   const mealsData = [
-    { id: 1, name: 'Millet / Uji Porridge', description: 'Traditional millet breakfast porridge', budget: 70, category: 'Breakfast', ingredients: ['Millet flour', 'Water', 'Optional milk'], recipe: '1. Boil water in a pot. 2. Mix millet flour with cold water to form a smooth paste. 3. Pour the paste into boiling water while stirring continuously. 4. Cook for 10-15 minutes while stirring. 5. Add milk if desired. 6. Serve hot.', healthScore: 5, culturalNote: 'Many Kenyans grew up taking uji before school or farm work', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 2, name: 'Boiled Sweet Potatoes & Eggs', description: 'Boiled sweet potatoes with eggs', budget: 90, category: 'Breakfast', ingredients: ['Sweet potatoes', 'Eggs', 'Salt'], recipe: '1. Peel and wash sweet potatoes. 2. Boil sweet potatoes in salted water until tender (20-30 minutes). 3. In a separate pot, boil eggs for 10 minutes. 4. Drain and serve together.', healthScore: 5, culturalNote: 'A common student and bedsitter breakfast', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 3, name: 'Boiled Maize & Greens', description: 'Boiled maize served with greens', budget: 80, category: 'Breakfast', ingredients: ['Dry maize', 'Sukuma wiki', 'Salt'], recipe: '1. Soak dry maize overnight. 2. Boil maize until tender (1-2 hours). 3. Wash and chop sukuma wiki. 4. Sauté greens with salt. 5. Serve maize with greens on the side.', healthScore: 4, culturalNote: 'Often sold early morning by roadside vendors', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 4, name: 'Vegetable Omelette', description: 'Egg omelette with vegetables', budget: 110, category: 'Breakfast', ingredients: ['Eggs', 'Onion', 'Tomato', 'Spinach', 'Cooking oil'], recipe: '1. Chop onion, tomato, and spinach finely. 2. Beat eggs in a bowl with salt. 3. Heat oil in a pan. 4. Add vegetables and sauté for 2 minutes. 5. Pour in beaten eggs. 6. Cook until set, flip and cook other side. 7. Serve hot.', healthScore: 5, culturalNote: 'A quick filling breakfast when time is limited', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 5, name: 'Mandazi & Milk', description: 'Fried dough served with milk', budget: 80, category: 'Breakfast', ingredients: ['Wheat flour', 'Sugar', 'Cooking oil', 'Milk'], recipe: '1. Mix flour, sugar, and a pinch of salt. 2. Add water gradually to form dough. 3. Let dough rest for 30 minutes. 4. Roll out and cut into triangles. 5. Heat oil and deep fry until golden brown. 6. Serve with warm milk.', healthScore: 2, culturalNote: 'Classic chai and mandazi combo especially on weekends', veg: false, leg: false, protein: false, lowSugar: false, lowSalt: false, moderateFats: true },
-    { id: 6, name: 'Fruit Salad', description: 'Fresh mixed seasonal fruits', budget: 100, category: 'Breakfast', ingredients: ['Mango', 'Banana', 'Pawpaw', 'Orange'], recipe: '1. Wash all fruits thoroughly. 2. Peel and dice mango, banana, and pawpaw. 3. Peel and segment orange. 4. Mix all fruits in a bowl. 5. Chill and serve.', healthScore: 5, culturalNote: 'Common in urban homes and juice kiosks', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 7, name: 'Tea & Whole Grain Toast', description: 'Tea served with whole grain toast', budget: 60, category: 'Breakfast', ingredients: ['Tea leaves', 'Water', 'Milk', 'Whole grain bread'], recipe: '1. Boil water with tea leaves. 2. Add milk and simmer for 2 minutes. 3. Strain tea. 4. Toast bread until golden. 5. Serve together.', healthScore: 4, culturalNote: 'The most normal weekday breakfast in Kenyan homes', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 8, name: 'Egg Sandwich', description: 'Whole grain sandwich with eggs', budget: 110, category: 'Breakfast', ingredients: ['Whole grain bread', 'Eggs', 'Tomato'], recipe: '1. Boil or fry eggs. 2. Slice tomato thinly. 3. Toast bread. 4. Place egg and tomato between bread slices. 5. Cut and serve.', healthScore: 5, culturalNote: 'Popular with people rushing to work or class', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 9, name: 'Sweet Potato & Eggs', description: 'Boiled sweet potato with eggs', budget: 90, category: 'Breakfast', ingredients: ['Sweet potatoes', 'Eggs', 'Salt'], recipe: '1. Peel and wash sweet potatoes. 2. Boil sweet potatoes in salted water until tender. 3. In a separate pot, boil eggs for 10 minutes. 4. Drain and serve together.', healthScore: 5, culturalNote: 'Affordable and filling upcountry breakfast', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 10, name: 'Mandazi & Tea', description: 'Mandazi served with tea', budget: 70, category: 'Breakfast', ingredients: ['Wheat flour', 'Sugar', 'Cooking oil', 'Tea leaves', 'Milk'], recipe: '1. Prepare mandazi as described earlier. 2. Boil tea with milk. 3. Serve mandazi with hot tea.', healthScore: 2, culturalNote: 'Common kiosk breakfast combo', veg: false, leg: false, protein: false, lowSugar: false, lowSalt: false, moderateFats: true },
-    { id: 11, name: 'Fruit Smoothie', description: 'Blended fruits with milk', budget: 100, category: 'Breakfast', ingredients: ['Banana', 'Mango', 'Milk'], recipe: '1. Peel and chop banana and mango. 2. Blend with milk until smooth. 3. Add ice if desired. 4. Serve immediately.', healthScore: 4, culturalNote: 'Popular with gym-goers and young professionals', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 12, name: 'Arrow Roots & Tea', description: 'Boiled arrow roots with tea', budget: 70, category: 'Breakfast', ingredients: ['Arrow roots', 'Tea leaves', 'Milk'], recipe: '1. Wash and peel arrow roots. 2. Boil until tender (30-40 minutes). 3. Prepare tea with milk. 4. Serve together.', healthScore: 4, culturalNote: 'Very traditional breakfast in many Kenyan homes', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 13, name: 'Boiled Cassava & Tea', description: 'Boiled cassava served with tea', budget: 70, category: 'Breakfast', ingredients: ['Cassava', 'Tea leaves', 'Milk'], recipe: '1. Peel and wash cassava. 2. Boil in salted water until tender (30-40 minutes). 3. Prepare milk tea. 4. Serve together.', healthScore: 4, culturalNote: 'Common in coastal and western Kenya', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 1, name: 'Millet / Uji Porridge', description: 'Traditional millet breakfast porridge', budget: 50, category: 'Breakfast', ingredients: ['Millet flour', 'Water', 'Optional milk'], recipe: '1. Boil water in a pot. 2. Mix millet flour with cold water to form a smooth paste. 3. Pour the paste into boiling water while stirring continuously. 4. Cook for 10-15 minutes while stirring. 5. Add milk if desired. 6. Serve hot.', healthScore: 5, culturalNote: 'Many Kenyans grew up taking uji before school or farm work', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 2, name: 'Boiled Sweet Potatoes & Eggs', description: 'Boiled sweet potatoes with eggs', budget: 80, category: 'Breakfast', ingredients: ['Sweet potatoes', 'Eggs', 'Salt'], recipe: '1. Peel and wash sweet potatoes. 2. Boil sweet potatoes in salted water until tender (20-30 minutes). 3. In a separate pot, boil eggs for 10 minutes. 4. Drain and serve together.', healthScore: 5, culturalNote: 'A common student and bedsitter breakfast', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 3, name: 'Boiled Maize & Greens', description: 'Boiled maize served with greens', budget: 60, category: 'Breakfast', ingredients: ['Dry maize', 'Sukuma wiki', 'Salt'], recipe: '1. Soak dry maize overnight. 2. Boil maize until tender (1-2 hours). 3. Wash and chop sukuma wiki. 4. Sauté greens with salt. 5. Serve maize with greens on the side.', healthScore: 4, culturalNote: 'Often sold early morning by roadside vendors', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 4, name: 'Vegetable Omelette', description: 'Egg omelette with vegetables', budget: 90, category: 'Breakfast', ingredients: ['Eggs', 'Onion', 'Tomato', 'Spinach', 'Cooking oil'], recipe: '1. Chop onion, tomato, and spinach finely. 2. Beat eggs in a bowl with salt. 3. Heat oil in a pan. 4. Add vegetables and sauté for 2 minutes. 5. Pour in beaten eggs. 6. Cook until set, flip and cook other side. 7. Serve hot.', healthScore: 5, culturalNote: 'A quick filling breakfast when time is limited', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 5, name: 'Mandazi & Milk', description: 'Fried dough served with milk', budget: 70, category: 'Breakfast', ingredients: ['Wheat flour', 'Sugar', 'Cooking oil', 'Milk'], recipe: '1. Mix flour, sugar, and a pinch of salt. 2. Add water gradually to form dough. 3. Let dough rest for 30 minutes. 4. Roll out and cut into triangles. 5. Heat oil and deep fry until golden brown. 6. Serve with warm milk.', healthScore: 2, culturalNote: 'Classic chai and mandazi combo especially on weekends', veg: false, leg: false, protein: false, lowSugar: false, lowSalt: false, moderateFats: true },
+    { id: 6, name: 'Fruit Salad', description: 'Fresh mixed seasonal fruits', budget: 80, category: 'Breakfast', ingredients: ['Mango', 'Banana', 'Pawpaw', 'Orange'], recipe: '1. Wash all fruits thoroughly. 2. Peel and dice mango, banana, and pawpaw. 3. Peel and segment orange. 4. Mix all fruits in a bowl. 5. Chill and serve.', healthScore: 5, culturalNote: 'Common in urban homes and juice kiosks', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 7, name: 'Tea & Whole Grain Toast', description: 'Tea served with whole grain toast', budget: 70, category: 'Breakfast', ingredients: ['Tea leaves', 'Water', 'Milk', 'Whole grain bread'], recipe: '1. Boil water with tea leaves. 2. Add milk and simmer for 2 minutes. 3. Strain tea. 4. Toast bread until golden. 5. Serve together.', healthScore: 4, culturalNote: 'The most normal weekday breakfast in Kenyan homes', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 8, name: 'Egg Sandwich', description: 'Whole grain sandwich with eggs', budget: 90, category: 'Breakfast', ingredients: ['Whole grain bread', 'Eggs', 'Tomato'], recipe: '1. Boil or fry eggs. 2. Slice tomato thinly. 3. Toast bread. 4. Place egg and tomato between bread slices. 5. Cut and serve.', healthScore: 5, culturalNote: 'Popular with people rushing to work or class', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 9, name: 'Egg-Pasua (2 pcs)', description: 'Boiled eggs with kachumbari', budget: 50, category: 'Breakfast', ingredients: ['Eggs', 'Tomato', 'Onion', 'Salt'], recipe: '1. Boil eggs for 10 mins. 2. Peel and split. 3. Stuff with chopped kachumbari.', healthScore: 5, culturalNote: 'Fastest high-protein fix for morning classes', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 10, name: 'Mandazi & Tea', description: 'Mandazi served with tea', budget: 50, category: 'Breakfast', ingredients: ['Wheat flour', 'Sugar', 'Cooking oil', 'Tea leaves', 'Milk'], recipe: '1. Prepare mandazi as described earlier. 2. Boil tea with milk. 3. Serve mandazi with hot tea.', healthScore: 2, culturalNote: 'Common kiosk breakfast combo', veg: false, leg: false, protein: false, lowSugar: false, lowSalt: false, moderateFats: true },
+    { id: 11, name: 'Fruit Smoothie', description: 'Blended fruits with milk', budget: 120, category: 'Breakfast', ingredients: ['Banana', 'Mango', 'Milk'], recipe: '1. Peel and chop banana and mango. 2. Blend with milk until smooth. 3. Add ice if desired. 4. Serve immediately.', healthScore: 4, culturalNote: 'Popular with gym-goers and young professionals', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 12, name: 'Arrow Roots & Tea', description: 'Boiled arrow roots with tea', budget: 80, category: 'Breakfast', ingredients: ['Arrow roots', 'Tea leaves', 'Milk'], recipe: '1. Wash and peel arrow roots. 2. Boil until tender (30-40 minutes). 3. Prepare tea with milk. 4. Serve together.', healthScore: 4, culturalNote: 'Very traditional breakfast in many Kenyan homes', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 13, name: 'Boiled Cassava & Tea', description: 'Boiled cassava served with tea', budget: 60, category: 'Breakfast', ingredients: ['Cassava', 'Tea leaves', 'Milk'], recipe: '1. Peel and wash cassava. 2. Boil in salted water until tender (30-40 minutes). 3. Prepare milk tea. 4. Serve together.', healthScore: 4, culturalNote: 'Common in coastal and western Kenya', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 14, name: 'Boiled Arrow Roots & Eggs', description: 'Arrow roots with boiled eggs', budget: 100, category: 'Breakfast', ingredients: ['Arrow roots', 'Eggs', 'Salt'], recipe: '1. Wash and peel arrow roots. 2. Boil until tender. 3. In a separate pot, boil eggs for 10 minutes. 4. Serve together.', healthScore: 5, culturalNote: 'A strong breakfast often taken by farmers', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 15, name: 'Bread & Avocado', description: 'Bread served with avocado', budget: 80, category: 'Breakfast', ingredients: ['Bread', 'Avocado'], recipe: '1. Slice bread. 2. Cut avocado in half, remove seed. 3. Scoop avocado and mash with salt. 4. Spread on bread. 5. Serve.', healthScore: 4, culturalNote: 'Very popular when avocado is in season', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 16, name: 'Boiled Eggs & Avocado', description: 'Boiled eggs served with avocado', budget: 90, category: 'Breakfast', ingredients: ['Eggs', 'Avocado'], recipe: '1. Boil eggs for 10 minutes. 2. Peel eggs. 3. Cut avocado in half. 4. Serve together with salt.', healthScore: 5, culturalNote: 'Simple protein plus healthy mafuta good fats', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 17, name: 'Ugali & Sukuma Wiki', description: 'Ugali served with collard greens', budget: 120, category: 'Lunch', ingredients: ['Maize flour', 'Sukuma wiki', 'Cooking oil'], recipe: '1. Boil water in a sufuria. 2. Add maize flour gradually while stirring to avoid lumps. 3. Cook for 10 minutes, stirring constantly. 4. Wash and chop sukuma wiki. 5. Sauté with onions and tomatoes. 6. Serve ugali with sukuma.', healthScore: 5, culturalNote: 'If you say Kenyan food this is usually the first thing people think of', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 18, name: 'Githeri (Maize & Beans)', description: 'Boiled maize and beans', budget: 130, category: 'Lunch', ingredients: ['Maize', 'Beans', 'Salt'], recipe: '1. Soak maize and beans overnight. 2. Boil together until tender (2-3 hours). 3. Add salt to taste. 4. Can add onions and tomatoes for flavor. 5. Serve hot.', healthScore: 5, culturalNote: 'Very common in central Kenya and school menus', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 19, name: 'Grilled Fish with Vegetables', description: 'Grilled fish served with vegetables', budget: 250, category: 'Lunch', ingredients: ['Fish', 'Cabbage', 'Carrots'], recipe: '1. Clean and season fish with salt and lemon. 2. Grill fish until cooked through. 3. Chop cabbage and carrots. 4. Boil vegetables until tender. 5. Serve fish with vegetables.', healthScore: 5, culturalNote: 'Common lakeside meal especially around Kisumu', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 15, name: 'Bread & Avocado', description: 'Bread served with avocado', budget: 60, category: 'Breakfast', ingredients: ['Bread', 'Avocado'], recipe: '1. Slice bread. 2. Cut avocado in half, remove seed. 3. Scoop avocado and mash with salt. 4. Spread on bread. 5. Serve.', healthScore: 4, culturalNote: 'Very popular when avocado is in season', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 16, name: 'Boiled Eggs & Avocado', description: 'Boiled eggs served with avocado', budget: 70, category: 'Breakfast', ingredients: ['Eggs', 'Avocado'], recipe: '1. Boil eggs for 10 minutes. 2. Peel eggs. 3. Cut avocado in half. 4. Serve together with salt.', healthScore: 5, culturalNote: 'Simple protein plus healthy mafuta good fats', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 17, name: 'Ugali & Sukuma Wiki', description: 'Ugali served with collard greens', budget: 80, category: 'Lunch', ingredients: ['Maize flour', 'Sukuma wiki', 'Cooking oil'], recipe: '1. Boil water in a sufuria. 2. Add maize flour gradually while stirring to avoid lumps. 3. Cook for 10 minutes, stirring constantly. 4. Wash and chop sukuma wiki. 5. Sauté with onions and tomatoes. 6. Serve ugali with sukuma.', healthScore: 5, culturalNote: 'If you say Kenyan food this is usually the first thing people think of', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 18, name: 'Githeri (Maize & Beans)', description: 'Boiled maize and beans', budget: 100, category: 'Lunch', ingredients: ['Maize', 'Beans', 'Salt'], recipe: '1. Soak maize and beans overnight. 2. Boil together until tender (2-3 hours). 3. Add salt to taste. 4. Can add onions and tomatoes for flavor. 5. Serve hot.', healthScore: 5, culturalNote: 'Very common in central Kenya and school menus', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 19, name: 'Grilled Fish with Vegetables', description: 'Grilled fish served with vegetables', budget: 300, category: 'Lunch', ingredients: ['Fish', 'Cabbage', 'Carrots'], recipe: '1. Clean and season fish with salt and lemon. 2. Grill fish until cooked through. 3. Chop cabbage and carrots. 4. Boil vegetables until tender. 5. Serve fish with vegetables.', healthScore: 5, culturalNote: 'Common lakeside meal especially around Kisumu', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 20, name: 'Chapati with Vegetable Curry', description: 'Chapati served with vegetable curry', budget: 140, category: 'Lunch', ingredients: ['Wheat flour', 'Mixed vegetables', 'Spices'], recipe: '1. Make chapati dough with flour, water, and oil. 2. Roll out and cook on hot pan. 3. Cook mixed vegetables with curry spices. 4. Serve chapati with curry.', healthScore: 5, culturalNote: 'Often cooked on weekends or special days', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 21, name: 'Ndengu Stew & Rice', description: 'Green grams served with rice', budget: 180, category: 'Lunch', ingredients: ['Ndengu', 'Rice', 'Onion', 'Tomato'], recipe: '1. Boil ndengu until tender. 2. Cook rice separately. 3. Fry onions and tomatoes. 4. Add boiled ndengu to tomato mixture. 5. Serve with rice.', healthScore: 5, culturalNote: 'Very common nyumba ya kupanga lunch', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 21, name: 'Ndengu Stew & Rice', description: 'Green grams served with rice', budget: 130, category: 'Lunch', ingredients: ['Ndengu', 'Rice', 'Onion', 'Tomato'], recipe: '1. Boil ndengu until tender. 2. Cook rice separately. 3. Fry onions and tomatoes. 4. Add boiled ndengu to tomato mixture. 5. Serve with rice.', healthScore: 5, culturalNote: 'Very common nyumba ya kupanga lunch', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 22, name: 'Tilapia & Ugali', description: 'Grilled tilapia served with ugali', budget: 250, category: 'Dinner', ingredients: ['Tilapia', 'Maize flour'], recipe: '1. Clean and season tilapia. 2. Grill or fry fish. 3. Prepare ugali as usual. 4. Serve together with kachumbari.', healthScore: 5, culturalNote: 'A favourite around Lake Victoria', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 23, name: 'Ndengu Chapati', description: 'Green grams served with chapati', budget: 150, category: 'Lunch', ingredients: ['Ndengu', 'Wheat flour'], recipe: '1. Boil ndengu with onions and tomatoes. 2. Prepare chapati dough. 3. Roll and cook chapati. 4. Serve ndengu with chapati.', healthScore: 5, culturalNote: 'Popular among students and bachelors', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 23, name: 'Ndengu Chapati', description: 'Green grams served with chapati', budget: 100, category: 'Lunch', ingredients: ['Ndengu', 'Wheat flour'], recipe: '1. Boil ndengu with onions and tomatoes. 2. Prepare chapati dough. 3. Roll and cook chapati. 4. Serve ndengu with chapati.', healthScore: 5, culturalNote: 'Popular among students and bachelors', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 24, name: 'Vegetable Stew with Rice', description: 'Mixed vegetable stew with rice', budget: 140, category: 'Dinner', ingredients: ['Rice', 'Carrots', 'Spinach', 'Tomato'], recipe: '1. Cook rice. 2. Dice carrots and chop spinach. 3. Fry vegetables with tomatoes. 4. Simmer until tender. 5. Serve with rice.', healthScore: 5, culturalNote: 'Healthy everyday nyumba ya kupanga meal', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 25, name: 'Omena Stew & Ugali', description: 'Omena stew served with ugali', budget: 220, category: 'Dinner', ingredients: ['Omena', 'Tomato', 'Onion', 'Maize flour'], recipe: '1. Clean omena thoroughly. 2. Fry with onions and tomatoes. 3. Add water and simmer. 4. Prepare ugali. 5. Serve together.', healthScore: 5, culturalNote: 'Cheap but powerful protein in western Kenya', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 25, name: 'Omena Stew & Ugali', description: 'Omena stew served with ugali', budget: 150, category: 'Dinner', ingredients: ['Omena', 'Tomato', 'Onion', 'Maize flour'], recipe: '1. Clean omena thoroughly. 2. Fry with onions and tomatoes. 3. Add water and simmer. 4. Prepare ugali. 5. Serve together.', healthScore: 5, culturalNote: 'Cheap but powerful protein in western Kenya', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 26, name: 'Chicken & Vegetable Curry', description: 'Chicken cooked with vegetables', budget: 220, category: 'Dinner', ingredients: ['Chicken', 'Carrots', 'Peas', 'Spices'], recipe: '1. Cut chicken into pieces. 2. Fry chicken until browned. 3. Add vegetables and curry spices. 4. Simmer until cooked. 5. Serve with rice or chapati.', healthScore: 5, culturalNote: 'Home-style curry often cooked on Sundays', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 27, name: 'Brown Rice & Beans', description: 'Brown rice with beans', budget: 180, category: 'Lunch', ingredients: ['Brown rice', 'Beans'], recipe: '1. Soak beans overnight. 2. Boil beans until tender. 3. Cook brown rice separately. 4. Serve together.', healthScore: 5, culturalNote: 'Chosen by people trying to eat healthier', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 28, name: 'Ugali & Cabbage Stew', description: 'Ugali served with cabbage stew', budget: 120, category: 'Dinner', ingredients: ['Maize flour', 'Cabbage'], recipe: '1. Prepare ugali. 2. Chop cabbage. 3. Fry with onions and tomatoes. 4. Serve with ugali.', healthScore: 4, culturalNote: 'Budget-friendly end-month meal', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
@@ -1425,7 +1434,7 @@ const MealPlannerApp = () => {
     { id: 30, name: 'Matoke & Chicken Stew', description: 'Matoke served with chicken stew', budget: 220, category: 'Dinner', ingredients: ['Matoke', 'Chicken'], recipe: '1. Peel and boil matoke. 2. Cook chicken with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Seen as a healthier matoke option', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 31, name: 'Rice & Mixed Legume Stew', description: 'Rice served with mixed legumes', budget: 180, category: 'Lunch', ingredients: ['Rice', 'Lentils', 'Beans'], recipe: '1. Cook rice. 2. Boil mixed legumes. 3. Add tomatoes and onions. 4. Serve with rice.', healthScore: 5, culturalNote: 'Affordable plant protein meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 32, name: 'Chicken Stew & Ugali', description: 'Chicken stew with ugali', budget: 200, category: 'Dinner', ingredients: ['Chicken', 'Maize flour'], recipe: '1. Cook chicken with tomatoes and onions. 2. Prepare ugali. 3. Serve together.', healthScore: 5, culturalNote: 'Classic Sunday lunch meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 33, name: 'Ugali & Beef Stew', description: 'Ugali served with beef stew', budget: 200, category: 'Dinner', ingredients: ['Maize flour', 'Beef'], recipe: '1. Cook beef stew with tomatoes. 2. Prepare ugali. 3. Serve together.', healthScore: 5, culturalNote: 'Very common across Kenyan households', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 33, name: 'Ugali & Beef Stew', description: 'Ugali served with beef stew', budget: 180, category: 'Dinner', ingredients: ['Maize flour', 'Beef'], recipe: '1. Cook beef stew with tomatoes. 2. Prepare ugali. 3. Serve together.', healthScore: 5, culturalNote: 'Very common across Kenyan households', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 34, name: 'Rice & Cabbage Stew', description: 'Rice served with cabbage stew', budget: 130, category: 'Lunch', ingredients: ['Rice', 'Cabbage'], recipe: '1. Cook rice. 2. Prepare cabbage stew. 3. Serve together.', healthScore: 4, culturalNote: 'Simple healthy meal when money is tight', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 35, name: 'Ugali & Spinach Stew', description: 'Ugali served with spinach', budget: 120, category: 'Dinner', ingredients: ['Maize flour', 'Spinach'], recipe: '1. Prepare ugali. 2. Cook spinach with onions. 3. Serve together.', healthScore: 5, culturalNote: 'Common when sukuma is replaced with spinach', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 36, name: 'Pumpkin Leaves (Seveve) & Ugali', description: 'Ugali with pumpkin leaves', budget: 120, category: 'Dinner', ingredients: ['Maize flour', 'Pumpkin leaves'], recipe: '1. Prepare ugali. 2. Cook pumpkin leaves with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'A delicacy in western Kenya homes', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
@@ -1438,26 +1447,30 @@ const MealPlannerApp = () => {
     { id: 43, name: 'Rice & Beef Stew', description: 'Rice served with beef stew', budget: 200, category: 'Dinner', ingredients: ['Rice', 'Beef'], recipe: '1. Cook rice. 2. Prepare beef stew. 3. Serve together.', healthScore: 5, culturalNote: 'Common lunch in town hotels', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 44, name: 'Ugali & Liver Stew', description: 'Ugali with liver stew', budget: 180, category: 'Dinner', ingredients: ['Maize flour', 'Liver'], recipe: '1. Prepare ugali. 2. Cook liver stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Known for boosting iron levels', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 45, name: 'Rice & Liver Stew', description: 'Rice served with liver stew', budget: 180, category: 'Dinner', ingredients: ['Rice', 'Liver'], recipe: '1. Cook rice. 2. Prepare liver stew. 3. Serve together.', healthScore: 5, culturalNote: 'Nutritious and filling meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 46, name: 'Rice & Beans', description: 'Rice served with beans', budget: 150, category: 'Lunch', ingredients: ['Rice', 'Beans'], recipe: '1. Cook rice and beans separately. 2. Serve together.', healthScore: 5, culturalNote: 'End-month lifesaver meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 47, name: 'Matumbo Stew & Ugali', description: 'Tripe stew served with ugali', budget: 180, category: 'Dinner', ingredients: ['Matumbo', 'Onion', 'Tomato', 'Maize flour'], recipe: '1. Clean matumbo thoroughly. 2. Boil until tender. 3. Fry with onions and tomatoes. 4. Prepare ugali. 5. Serve together.', healthScore: 4, culturalNote: 'Popular in local joints and markets', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 46, name: 'Rice & Beans', description: 'Rice served with beans', budget: 110, category: 'Lunch', ingredients: ['Rice', 'Beans'], recipe: '1. Cook rice and beans separately. 2. Serve together.', healthScore: 5, culturalNote: 'End-month lifesaver meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 47, name: 'Matumbo Stew & Ugali', description: 'Tripe stew served with ugali', budget: 130, category: 'Dinner', ingredients: ['Matumbo', 'Onion', 'Tomato', 'Maize flour'], recipe: '1. Clean matumbo thoroughly. 2. Boil until tender. 3. Fry with onions and tomatoes. 4. Prepare ugali. 5. Serve together.', healthScore: 4, culturalNote: 'Popular in local joints and markets', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 48, name: 'Matumbo Stew & Rice', description: 'Tripe stew served with rice', budget: 180, category: 'Dinner', ingredients: ['Matumbo', 'Rice'], recipe: '1. Clean matumbo thoroughly. 2. Boil until tender. 3. Fry with onions and tomatoes. 4. Cook rice. 5. Serve together.', healthScore: 4, culturalNote: 'Common street food lunch option', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 49, name: 'Rice & Minced Meat Stew', description: 'Rice with minced meat stew', budget: 180, category: 'Dinner', ingredients: ['Rice', 'Minced beef'], recipe: '1. Cook rice. 2. Prepare minced meat stew. 3. Serve together.', healthScore: 5, culturalNote: 'Easy to cook family meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 50, name: 'Ugali & Minced Meat Stew', description: 'Ugali with minced meat stew', budget: 180, category: 'Dinner', ingredients: ['Maize flour', 'Minced beef'], recipe: '1. Prepare ugali. 2. Cook minced meat stew. 3. Serve together.', healthScore: 5, culturalNote: 'Common quick supper meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 51, name: 'Spaghetti & Minced Meat Stew', description: 'Spaghetti served with minced meat', budget: 200, category: 'Dinner', ingredients: ['Spaghetti', 'Minced beef'], recipe: '1. Cook spaghetti according to package instructions. 2. Prepare minced meat stew. 3. Serve together.', healthScore: 3, culturalNote: 'Urban fusion dish especially for kids', veg: false, leg: false, protein: true, lowSugar: false, lowSalt: true, moderateFats: true },
     { id: 52, name: 'Ugali & Peas Stew', description: 'Ugali served with peas stew', budget: 140, category: 'Dinner', ingredients: ['Maize flour', 'Peas'], recipe: '1. Prepare ugali. 2. Cook peas stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Plant protein option in many homes', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 53, name: 'Grilled Chicken & Rice', description: 'Grilled chicken served with rice', budget: 220, category: 'Dinner', ingredients: ['Chicken', 'Rice'], recipe: '1. Season and grill chicken. 2. Cook rice. 3. Serve together.', healthScore: 5, culturalNote: 'Balanced protein meal from eateries', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 54, name: 'Chapati & Beans Stew', description: 'Chapati served with beans stew', budget: 150, category: 'Lunch', ingredients: ['Wheat flour', 'Beans'], recipe: '1. Prepare chapati. 2. Cook beans stew. 3. Serve together.', healthScore: 5, culturalNote: 'Student-friendly and affordable meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 54, name: 'Chapati & Beans Stew', description: 'Chapati served with beans stew', budget: 100, category: 'Lunch', ingredients: ['Wheat flour', 'Beans'], recipe: '1. Prepare chapati. 2. Cook beans stew. 3. Serve together.', healthScore: 5, culturalNote: 'Student-friendly and affordable meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 55, name: 'Rice & Kamande', description: 'Rice served with pigeon peas', budget: 160, category: 'Dinner', ingredients: ['Rice', 'Pigeon peas'], recipe: '1. Cook rice. 2. Boil pigeon peas with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Common in eastern and dry regions', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 56, name: 'Chapati & Kamande', description: 'Chapati served with pigeon peas', budget: 160, category: 'Dinner', ingredients: ['Wheat flour', 'Pigeon peas'], recipe: '1. Prepare chapati. 2. Cook pigeon peas stew. 3. Serve together.', healthScore: 5, culturalNote: 'Traditional plant protein meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 57, name: 'Chapati & Beef Stew', description: 'Chapati served with beef stew', budget: 200, category: 'Dinner', ingredients: ['Wheat flour', 'Beef'], recipe: '1. Prepare chapati. 2. Cook beef stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Popular town and home meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 58, name: 'Chapati & Beans', description: 'Chapati served with beans stew', budget: 150, category: 'Lunch', ingredients: ['Wheat flour', 'Beans', 'Onion', 'Tomato'], recipe: '1. Prepare chapati dough with flour, water, and oil. 2. Roll and cook on hot pan. 3. Boil beans with onions and tomatoes. 4. Serve together.', healthScore: 5, culturalNote: 'One of the most common affordable meals in Kenyan households and hostels', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 59, name: 'Rice & Pigeon Peas', description: 'Rice served with pigeon peas stew', budget: 160, category: 'Lunch', ingredients: ['Rice', 'Pigeon peas', 'Onion', 'Tomato'], recipe: '1. Cook rice. 2. Boil pigeon peas. 3. Fry with onions and tomatoes. 4. Serve together.', healthScore: 5, culturalNote: 'Very common in eastern Kenya and dry regions', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 60, name: 'Chapati & Pigeon Peas', description: 'Chapati served with pigeon peas stew', budget: 160, category: 'Lunch', ingredients: ['Wheat flour', 'Pigeon peas', 'Onion', 'Tomato'], recipe: '1. Prepare chapati. 2. Cook pigeon peas with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Traditional plant-protein meal often cooked at home', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 61, name: 'Chapati & Beef', description: 'Chapati served with beef stew', budget: 200, category: 'Lunch', ingredients: ['Wheat flour', 'Beef', 'Onion', 'Tomato'], recipe: '1. Prepare chapati. 2. Cook beef stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'A popular town and home meal especially on weekends', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true }
+    { id: 61, name: 'Chapati & Beef', description: 'Chapati served with beef stew', budget: 200, category: 'Lunch', ingredients: ['Wheat flour', 'Beef', 'Onion', 'Tomato'], recipe: '1. Prepare chapati. 2. Cook beef stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'A popular town and home meal especially on weekends', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 62, name: 'Smocha', description: 'Chapati rolled with a smokie', budget: 70, category: 'Lunch', ingredients: ['Wheat flour', 'Smokie', 'Kachumbari'], recipe: '1. Wrap a smokie and kachumbari inside a chapati. 2. Add sauce if desired.', healthScore: 2, culturalNote: 'The legendary Kenyan student burrito', veg: false, leg: false, protein: true, lowSugar: false, lowSalt: false, moderateFats: false },
+    { id: 63, name: 'Chips Mwitu', description: 'Deep fried street-side fries', budget: 80, category: 'Lunch', ingredients: ['Potatoes', 'Salt', 'Frying oil'], recipe: '1. Deep fry potato slices in hot oil. 2. Season with salt.', healthScore: 2, culturalNote: 'Iconic and affordable street food hack', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: false, moderateFats: false },
+    { id: 64, name: 'Ugali Mala', description: 'Ugali served with sour milk', budget: 110, category: 'Dinner', ingredients: ['Maize flour', 'Sour milk (Mala)'], recipe: '1. Cook hot ugali. 2. Serve with cold mala.', healthScore: 5, culturalNote: 'Cooling, healthy, and extremely filling', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 65, name: 'Rice Sosa', description: 'Rice served with plain stew gravy', budget: 50, category: 'Lunch', ingredients: ['Rice', 'Vegetable/Meat soup'], recipe: '1. Cook rice. 2. Serve with gravy from a stew.', healthScore: 3, culturalNote: 'The absolute broke-student emergency meal', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true }
   ];
 
   const [allMeals] = useState(mealsData);
-  const [selectedMeal, setSelectedMeal] = useState(null);
+  const [ setSelectedMeal] = useState(null); // Add selectedMeal immediately after opening bracket when returning friendships
   const [budget, setBudget] = useState(5000);
   const [maxMealBudget, setMaxMealBudget] = useState(250);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -1491,10 +1504,10 @@ const MealPlannerApp = () => {
     return stored ? JSON.parse(stored) : [];
   });
 
-  const [showAddFriend, setShowAddFriend] = useState(false);
-  const [searchUsername, setSearchUsername] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [selectedFriendsForMeal, setSelectedFriendsForMeal] = useState([]);
+  //const [showAddFriend, setShowAddFriend] = useState(false);
+  //const [searchUsername, setSearchUsername] = useState('');
+  //const [searchResults, setSearchResults] = useState([]);
+  //const [selectedFriendsForMeal, setSelectedFriendsForMeal] = useState([]);
 
   const [showTermsModal, setShowTermsModal] = useState(false);
 
@@ -2009,7 +2022,7 @@ const MealPlannerApp = () => {
 
 
 
-
+ /*
   const searchUsers = useCallback(async (queryText = searchUsername) => {
     // Handle case where queryText is an Event object (from button click)
     if (typeof queryText !== 'string') {
@@ -2042,7 +2055,7 @@ const MealPlannerApp = () => {
     }, 500); // 500ms delay
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchUsername, searchUsers]);
+  }, [searchUsername, searchUsers]); */
 
   const fetchFriends = useCallback(async (userId) => {
     if (!userId) {
@@ -2147,7 +2160,7 @@ const MealPlannerApp = () => {
     }
   }, []);
 
-  const removeFriend = async (friendId) => {
+  /*const removeFriend = async (friendId) => {
     if (!window.confirm("Are you sure you want to remove this friend?")) return;
 
     try {
@@ -2280,7 +2293,7 @@ const MealPlannerApp = () => {
       setFriendRequests([]);
     }
   }, [user, fetchFriends, fetchFriendRequests]);
-
+*/
 
 
 
@@ -2314,7 +2327,7 @@ const MealPlannerApp = () => {
       alert("Error sending feedback: " + error.message);
     }
   };
-  const sendMealToFriends = async () => {
+  /*const sendMealToFriends = async () => {
     if (!selectedMeal || selectedFriendsForMeal.length === 0) {
       alert("Please select a meal and at least one friend");
       return;
@@ -2362,7 +2375,7 @@ const MealPlannerApp = () => {
       console.error("Error sharing meals:", err);
       alert("Failed to share meal. Please try again.");
     }
-  };
+  };*/
 
   const trackActivity = async (action, details = {}) => {
     // Don't track if no user
@@ -2427,14 +2440,14 @@ const MealPlannerApp = () => {
           <DollarSign className="w-6 h-6" />
           <span className="text-xs mt-1">Budget</span>
         </button>
-        <button onClick={() => { setCurrentScreen('friends'); trackActivity('navigate', { screen: 'friends' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
+        {/* <button onClick={() => { setCurrentScreen('friends'); trackActivity('navigate', { screen: 'friends' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
           <Users className="w-6 h-6" />
           <span className="text-xs mt-1">Friends</span>
         </button>
         <button onClick={() => { setCurrentScreen('streaks'); trackActivity('navigate', { screen: 'streaks' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
           <Flame className="w-6 h-6" />
           <span className="text-xs mt-1">Streaks</span>
-        </button>
+        </button> */}
         <button onClick={() => { setCurrentScreen('feedback'); trackActivity('navigate', { screen: 'feedback' }); }} className="flex flex-col items-center p-3 hover:bg-gray-50">
           <MessageSquare className="w-6 h-6" />
           <span className="text-xs mt-1">Feedback</span>
@@ -2677,7 +2690,7 @@ const MealPlannerApp = () => {
               </p>
             </div>
 
-            <button
+            {/* <button
               onClick={() => {
                 selectMeal(viewingRecipe);
                 setViewingRecipe(null);
@@ -2686,7 +2699,7 @@ const MealPlannerApp = () => {
               className="w-full mt-6 bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
             >
               Share This Meal
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
@@ -2807,7 +2820,7 @@ const MealPlannerApp = () => {
               />
             )}
 
-            {currentScreen === 'friends' && (
+            {/* {currentScreen === 'friends' && (
               <FriendsScreen
                 user={user}
                 friends={friends}
@@ -2822,11 +2835,11 @@ const MealPlannerApp = () => {
                 showAddFriend={showAddFriend}
                 setShowAddFriend={setShowAddFriend}
               />
-            )}
+            )} */}
 
-            {currentScreen === 'streaks' && (
+            {/* {currentScreen === 'streaks' && (
               <StreaksScreen friends={friends} user={user} />
-            )}
+            )} */}
 
             {currentScreen === 'week-planner' && (
               <WeekPlannerScreen
@@ -2838,7 +2851,7 @@ const MealPlannerApp = () => {
             )}
 
             {/* SHARE */}
-            {currentScreen === 'share' && (
+            {/* {currentScreen === 'share' && (
               <ShareScreen
                 selectedMeal={selectedMeal}
                 friends={friends}
@@ -2847,7 +2860,7 @@ const MealPlannerApp = () => {
                 sendMealToFriends={sendMealToFriends}
                 setCurrentScreen={setCurrentScreen}
               />
-            )}
+            )} */}
             {currentScreen === 'feedback' && (
               <FeedbackScreen
                 submitFeedback={submitFeedback}
