@@ -1201,7 +1201,7 @@ const SuggestionsScreen = ({
 
                       try {
                         console.log("Saving meal to DB:", payload);
-                        const result = await supabaseFetch('user_activity', '', 'POST', payload);
+                        await supabaseFetch('user_activity', '', 'POST', payload);
                         // If we get here without error, it likely worked
                         alert(`Saved ${meal.name} as ${mealType} to your Week Plan!`);
 
