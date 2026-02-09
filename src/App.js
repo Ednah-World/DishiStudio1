@@ -166,8 +166,9 @@ const WeekPlannerScreen = ({ user, maxMealBudget, trackActivity, mealHistory }) 
     if (!user?.id) return;
     setLoading(true);
     try {
-      // Fetch ALL planned meals, not just limited to current week
-      const query = `?user_id=eq.${user.id}&action_type=eq.plan_meal&select=*&order=created_at.desc`;
+      // Fetch ALL planned meals (support both old 'plan_meal' and new 'select_meal')
+      // Supabase PostgREST syntax for OR filter: &or=(action_type.eq.plan_meal,action_type.eq.select_meal)
+      const query = `?user_id=eq.${user.id}&or=(action_type.eq.plan_meal,action_type.eq.select_meal)&select=*&order=created_at.desc`;
       const data = await supabaseFetch('user_activity', query);
       setPlannedMeals(data || []);
     } catch (err) {
@@ -1014,6 +1015,7 @@ const BudgetScreen = ({ budget, setBudget, trackActivity }) => {
 };
 
 const SuggestionsScreen = ({
+  user, // Added user prop
   maxMealBudget,
   setMaxMealBudget,
   selectedCategory,
@@ -1164,7 +1166,7 @@ const SuggestionsScreen = ({
                     View
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       // Custom prompt or simple window.prompt for now to stick to "don't complicate"
                       // but user asked for B/L/D insert.
                       const type = window.prompt("Is this for:\nB - Breakfast\nL - Lunch\nD - Dinner", "L");
@@ -1177,20 +1179,44 @@ const SuggestionsScreen = ({
                       else if (t === 'L') mealType = 'Lunch';
                       else mealType = 'Other';
 
-                      trackActivity('plan_meal', {
-                        meal_id: meal.id,
-                        meal_name: meal.name,
-                        budget: meal.budget,
-                        category: meal.category,
-                        meal_type: mealType // NEW
-                      });
-                      alert(`Added ${meal.name} as ${mealType} to your plan!`);
+                      // FORCE DIRECT DB SAVE to ensure it works
+                      if (!user?.id) {
+                        alert("Please log in to save meals.");
+                        return;
+                      }
+
+                      const payload = {
+                        user_id: user.id,
+                        user_email: user.email,
+                        action_type: 'select_meal', // Changed to select_meal as requested
+                        action_details: {
+                          meal_id: meal.id,
+                          meal_name: meal.name,
+                          budget: meal.budget,
+                          category: meal.category,
+                          meal_type: mealType
+                        },
+                        created_at: new Date().toISOString()
+                      };
+
+                      try {
+                        console.log("Saving meal to DB:", payload);
+                        const result = await supabaseFetch('user_activity', '', 'POST', payload);
+                        // If we get here without error, it likely worked
+                        alert(`Saved ${meal.name} as ${mealType} to your Week Plan!`);
+
+                        // Also track internally if needed, but the direct save is priority
+                        // trackActivity('plan_meal', ... ); 
+                      } catch (err) {
+                        console.error("DB Save Failed:", err);
+                        alert("Failed to save meal to database: " + err.message);
+                      }
                     }}
                     className="flex-1 bg-green-400 text-white py-2 rounded-lg font-bold hover:bg-green-500"
                   >
                     Select
                   </button>
-                
+
                 </div>
               </div>
             ))}
@@ -1459,18 +1485,17 @@ const MealPlannerApp = () => {
     { id: 55, name: 'Rice & Kamande', description: 'Rice served with pigeon peas', budget: 160, category: 'Dinner', ingredients: ['Rice', 'Pigeon peas'], recipe: '1. Cook rice. 2. Boil pigeon peas with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Common in eastern and dry regions', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 56, name: 'Chapati & Kamande', description: 'Chapati served with pigeon peas', budget: 160, category: 'Dinner', ingredients: ['Wheat flour', 'Pigeon peas'], recipe: '1. Prepare chapati. 2. Cook pigeon peas stew. 3. Serve together.', healthScore: 5, culturalNote: 'Traditional plant protein meal', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
     { id: 57, name: 'Chapati & Beef Stew', description: 'Chapati served with beef stew', budget: 200, category: 'Dinner', ingredients: ['Wheat flour', 'Beef'], recipe: '1. Prepare chapati. 2. Cook beef stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Popular town and home meal', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 58, name: 'Chapati & Beans', description: 'Chapati served with beans stew', budget: 150, category: 'Lunch', ingredients: ['Wheat flour', 'Beans', 'Onion', 'Tomato'], recipe: '1. Prepare chapati dough with flour, water, and oil. 2. Roll and cook on hot pan. 3. Boil beans with onions and tomatoes. 4. Serve together.', healthScore: 5, culturalNote: 'One of the most common affordable meals in Kenyan households and hostels', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 59, name: 'Rice & Pigeon Peas', description: 'Rice served with pigeon peas stew', budget: 160, category: 'Lunch', ingredients: ['Rice', 'Pigeon peas', 'Onion', 'Tomato'], recipe: '1. Cook rice. 2. Boil pigeon peas. 3. Fry with onions and tomatoes. 4. Serve together.', healthScore: 5, culturalNote: 'Very common in eastern Kenya and dry regions', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 60, name: 'Chapati & Pigeon Peas', description: 'Chapati served with pigeon peas stew', budget: 160, category: 'Lunch', ingredients: ['Wheat flour', 'Pigeon peas', 'Onion', 'Tomato'], recipe: '1. Prepare chapati. 2. Cook pigeon peas with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Traditional plant-protein meal often cooked at home', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 61, name: 'Chapati & Beef', description: 'Chapati served with beef stew', budget: 200, category: 'Lunch', ingredients: ['Wheat flour', 'Beef', 'Onion', 'Tomato'], recipe: '1. Prepare chapati. 2. Cook beef stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'A popular town and home meal especially on weekends', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 62, name: 'Smocha', description: 'Chapati rolled with a smokie', budget: 70, category: 'Lunch', ingredients: ['Wheat flour', 'Smokie', 'Kachumbari'], recipe: '1. Wrap a smokie and kachumbari inside a chapati. 2. Add sauce if desired.', healthScore: 2, culturalNote: 'The legendary Kenyan student burrito', veg: false, leg: false, protein: true, lowSugar: false, lowSalt: false, moderateFats: false },
-    { id: 63, name: 'Chips Mwitu', description: 'Deep fried street-side fries', budget: 80, category: 'Lunch', ingredients: ['Potatoes', 'Salt', 'Frying oil'], recipe: '1. Deep fry potato slices in hot oil. 2. Season with salt.', healthScore: 2, culturalNote: 'Iconic and affordable street food hack', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: false, moderateFats: false },
-    { id: 64, name: 'Ugali Mala', description: 'Ugali served with sour milk', budget: 110, category: 'Dinner', ingredients: ['Maize flour', 'Sour milk (Mala)'], recipe: '1. Cook hot ugali. 2. Serve with cold mala.', healthScore: 5, culturalNote: 'Cooling, healthy, and extremely filling', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
-    { id: 65, name: 'Rice Sosa', description: 'Rice served with plain stew gravy', budget: 50, category: 'Lunch', ingredients: ['Rice', 'Vegetable/Meat soup'], recipe: '1. Cook rice. 2. Serve with gravy from a stew.', healthScore: 3, culturalNote: 'The absolute broke-student emergency meal', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true }
+    { id: 58, name: 'Rice & Pigeon Peas', description: 'Rice served with pigeon peas stew', budget: 160, category: 'Lunch', ingredients: ['Rice', 'Pigeon peas', 'Onion', 'Tomato'], recipe: '1. Cook rice. 2. Boil pigeon peas. 3. Fry with onions and tomatoes. 4. Serve together.', healthScore: 5, culturalNote: 'Very common in eastern Kenya and dry regions', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 59, name: 'Chapati & Pigeon Peas', description: 'Chapati served with pigeon peas stew', budget: 160, category: 'Lunch', ingredients: ['Wheat flour', 'Pigeon peas', 'Onion', 'Tomato'], recipe: '1. Prepare chapati. 2. Cook pigeon peas with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'Traditional plant-protein meal often cooked at home', veg: true, leg: true, protein: false, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 60, name: 'Chapati & Beef', description: 'Chapati served with beef stew', budget: 200, category: 'Lunch', ingredients: ['Wheat flour', 'Beef', 'Onion', 'Tomato'], recipe: '1. Prepare chapati. 2. Cook beef stew with onions and tomatoes. 3. Serve together.', healthScore: 5, culturalNote: 'A popular town and home meal especially on weekends', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 61, name: 'Smocha', description: 'Chapati rolled with a smokie', budget: 70, category: 'Lunch', ingredients: ['Wheat flour', 'Smokie', 'Kachumbari'], recipe: '1. Wrap a smokie and kachumbari inside a chapati. 2. Add sauce if desired.', healthScore: 2, culturalNote: 'The legendary Kenyan student burrito', veg: false, leg: false, protein: true, lowSugar: false, lowSalt: false, moderateFats: false },
+    { id: 62, name: 'Chips Mwitu', description: 'Deep fried street-side fries', budget: 80, category: 'Lunch', ingredients: ['Potatoes', 'Salt', 'Frying oil'], recipe: '1. Deep fry potato slices in hot oil. 2. Season with salt.', healthScore: 2, culturalNote: 'Iconic and affordable street food hack', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: false, moderateFats: false },
+    { id: 63, name: 'Ugali Mala', description: 'Ugali served with sour milk', budget: 110, category: 'Dinner', ingredients: ['Maize flour', 'Sour milk (Mala)'], recipe: '1. Cook hot ugali. 2. Serve with cold mala.', healthScore: 5, culturalNote: 'Cooling, healthy, and extremely filling', veg: true, leg: false, protein: true, lowSugar: true, lowSalt: true, moderateFats: true },
+    { id: 64, name: 'Rice Sosa', description: 'Rice served with plain stew gravy', budget: 50, category: 'Lunch', ingredients: ['Rice', 'Vegetable/Meat soup'], recipe: '1. Cook rice. 2. Serve with gravy from a stew.', healthScore: 3, culturalNote: 'The absolute broke-student emergency meal', veg: true, leg: false, protein: false, lowSugar: true, lowSalt: true, moderateFats: true }
   ];
 
   const [allMeals] = useState(mealsData);
-  const [ setSelectedMeal] = useState(null); // Add selectedMeal immediately after opening bracket when returning friendships
+  const [setSelectedMeal] = useState(null); // Add selectedMeal immediately after opening bracket when returning friendships
   const [budget, setBudget] = useState(5000);
   const [maxMealBudget, setMaxMealBudget] = useState(250);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -1877,6 +1902,64 @@ const MealPlannerApp = () => {
     );
   };
 
+
+  const subscribeToPush = async (userId) => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      console.log('Push notifications not supported');
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        console.log('Notification permission denied');
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+
+      // Fetch public key from backend
+      let applicationServerKey;
+      try {
+        const keyResponse = await fetch(`${supabaseUrl}/functions/v1/scheduled-reminder?type=VAPID_PUBLIC_KEY`, {
+          headers: { 'Authorization': `Bearer ${supabaseAnonKey}` }
+        });
+        if (keyResponse.ok) {
+          const keyData = await keyResponse.json();
+          applicationServerKey = keyData.vapid_public_key;
+        }
+      } catch (e) {
+        console.warn("Failed to fetch VAPID key", e);
+      }
+
+      // Fallback or error if no key
+      if (!applicationServerKey) {
+        console.warn("No VAPID Key found, skipping subscription.");
+        return;
+      }
+
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey
+      });
+
+      console.log("Push Subscription:", subscription);
+
+      // Save to Supabase
+      if (userId) {
+        await supabaseFetch('push_subscriptions', '', 'POST', {
+          user_id: userId,
+          subscription: subscription,
+          created_at: new Date().toISOString()
+        });
+        console.log("Saved push subscription to DB");
+      }
+
+    } catch (error) {
+      console.error("Push subscription error:", error);
+    }
+  };
+
   const handleLogin = async (email, password) => {
     setLoading(true);
     try {
@@ -1920,8 +2003,12 @@ const MealPlannerApp = () => {
         // (Bypasses the delay of waiting for the 'user' state to refresh)
         await fetchFriendRequests(data.user.id);
         await fetchFriends(data.user.id);
+
         // ✅ CHECK TERMS ACCEPTANCE AFTER LOGIN
         await checkTermsAcceptance(data.user.id);
+
+        // ✅ SUBSCRIBE TO PUSH
+        await subscribeToPush(data.user.id);
       }
     } catch (error) {
       console.error("Login detail error:", error);
@@ -2022,40 +2109,40 @@ const MealPlannerApp = () => {
 
 
 
- /*
-  const searchUsers = useCallback(async (queryText = searchUsername) => {
-    // Handle case where queryText is an Event object (from button click)
-    if (typeof queryText !== 'string') {
-      queryText = searchUsername;
-    }
-
-    // If empty, clear results
-    if (!queryText || !queryText.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    try {
-      // We call the database directly via URL using ILIKE for partial match
-      const query = `?username=ilike.*${queryText}*&select=id,username,full_name`;
-      const data = await supabaseFetch('users', query);
-
-      setSearchResults(data || []);
-    } catch (err) {
-      console.error(err);
-      // Silent error for live search, optionally set empty
-      setSearchResults([]);
-    }
-  }, [searchUsername]);
-
-  // Live Search Effect (Debounced)
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      searchUsers(searchUsername);
-    }, 500); // 500ms delay
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchUsername, searchUsers]); */
+  /*
+   const searchUsers = useCallback(async (queryText = searchUsername) => {
+     // Handle case where queryText is an Event object (from button click)
+     if (typeof queryText !== 'string') {
+       queryText = searchUsername;
+     }
+ 
+     // If empty, clear results
+     if (!queryText || !queryText.trim()) {
+       setSearchResults([]);
+       return;
+     }
+ 
+     try {
+       // We call the database directly via URL using ILIKE for partial match
+       const query = `?username=ilike.*${queryText}*&select=id,username,full_name`;
+       const data = await supabaseFetch('users', query);
+ 
+       setSearchResults(data || []);
+     } catch (err) {
+       console.error(err);
+       // Silent error for live search, optionally set empty
+       setSearchResults([]);
+     }
+   }, [searchUsername]);
+ 
+   // Live Search Effect (Debounced)
+   useEffect(() => {
+     const delayDebounceFn = setTimeout(() => {
+       searchUsers(searchUsername);
+     }, 500); // 500ms delay
+ 
+     return () => clearTimeout(delayDebounceFn);
+   }, [searchUsername, searchUsers]); */
 
   const fetchFriends = useCallback(async (userId) => {
     if (!userId) {
@@ -2162,42 +2249,42 @@ const MealPlannerApp = () => {
 
   /*const removeFriend = async (friendId) => {
     if (!window.confirm("Are you sure you want to remove this friend?")) return;
-
+ 
     try {
       // We delete the friendship where you are either the sender or the receiver
       const { error } = await supabase
         .from('friendships')
         .delete()
         .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${user.id})`);
-
+ 
       if (error) throw error;
-
+ 
       // Update local state so the UI refreshes immediately
       setFriends(friends.filter(f => f.id !== friendId));
       alert("Friend removed");
-
+ 
     } catch (error) {
       console.error("Error removing friend:", error.message);
       alert("Could not remove friend. Please try again.");
     }
   };
-
+ 
   const sendFriendRequest = async (targetUser) => {
     if (targetUser.id === user.id) {
       alert("You cannot add yourself as a friend.");
       return;
     }
-
+ 
     try {
       // 1. Check for existing requests
       const checkQuery = `?or=(and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id}))&select=id,status`;
       const existingRequest = await supabaseFetch('friend_requests', checkQuery);
-
+ 
       if (existingRequest && existingRequest.length > 0) {
         alert(`A friend request is already ${existingRequest[0].status}.`);
         return;
       }
-
+ 
       // 2. Insert ONLY into friend_requests (NOT friendships yet!)
       const payload = {
         sender_id: user.id,
@@ -2205,10 +2292,10 @@ const MealPlannerApp = () => {
         status: 'pending',
         created_at: new Date().toISOString()
       };
-
+ 
       console.log("Sending friend request:", payload);
       const result = await supabaseFetch('friend_requests', '', 'POST', payload);
-
+ 
       if (result) {
         // 3. Track activity
         trackActivity('send_friend_request', {
@@ -2216,12 +2303,12 @@ const MealPlannerApp = () => {
           to_username: targetUser.username,
           timestamp: new Date().toISOString()
         });
-
+ 
         // 4. Update UI
         alert(`Friend request sent to @${targetUser.username}!`);
         setSearchUsername('');
         setSearchResults([]);
-
+ 
         console.log("✅ Friend request sent successfully!");
       } else {
         alert('Failed to send friend request');
@@ -2231,16 +2318,16 @@ const MealPlannerApp = () => {
       alert('Failed to send request: ' + error.message);
     }
   };
-
+ 
   const handleFriendRequest = async (request, accept) => {
     try {
       if (accept) {
         // 1. Update friend_requests table to 'accepted'
         const updatePayload = { status: 'accepted' };
         const updateResult = await supabaseFetch('friend_requests', `?id=eq.${request.id}`, 'PATCH', updatePayload);
-
+ 
         console.log("Friend request updated:", updateResult);
-
+ 
         // 2. Create friendship record (this is when we add to friendships table)
         const friendshipPayload = {
           sender_id: request.sender_id,
@@ -2248,41 +2335,41 @@ const MealPlannerApp = () => {
           status: 'accepted',
           created_at: new Date().toISOString()
         };
-
+ 
         const friendshipResult = await supabaseFetch('friendships', '', 'POST', friendshipPayload);
         console.log("Friendship created:", friendshipResult);
-
+ 
         // 3. Track activity
         trackActivity('accept_friend_request', {
           from_user_id: request.sender_id,
           timestamp: new Date().toISOString()
         });
-
+ 
       } else {
         // Decline: Just delete the friend request
         await supabaseFetch('friend_requests', `?id=eq.${request.id}`, 'DELETE');
-
+ 
         trackActivity('decline_friend_request', {
           from_user_id: request.sender_id,
           timestamp: new Date().toISOString()
         });
       }
-
+ 
       // 4. Refresh the friends list and requests
       await fetchFriends(user.id);
       await fetchFriendRequests(user.id);
-
+ 
       alert(accept ? "Friend added! 🎉" : "Request declined");
-
+ 
     } catch (error) {
       console.error("Friend request error:", error);
       alert("Update failed: " + error.message);
     }
   };
-
+ 
   useEffect(() => {
     console.log("👀 useEffect triggered, user:", user?.id);
-
+ 
     if (user?.id) {
       console.log("🚀 Fetching friends and requests...");
       fetchFriends(user.id);
@@ -2332,7 +2419,7 @@ const MealPlannerApp = () => {
       alert("Please select a meal and at least one friend");
       return;
     }
-
+ 
     try {
       // Create activity records for each friend
       const mealPromises = selectedFriendsForMeal.map(async (friendId) => {
@@ -2350,27 +2437,27 @@ const MealPlannerApp = () => {
           },
           created_at: new Date().toISOString()
         };
-
+ 
         console.log("📤 Sharing meal:", payload);
         return await supabaseFetch('user_activity', '', 'POST', payload);
       });
-
+ 
       const results = await Promise.all(mealPromises);
       console.log("✅ Meals shared:", results);
-
+ 
       alert(`🎉 ${selectedMeal.name} shared with ${selectedFriendsForMeal.length} friend(s)!`);
-
+ 
       // Track the activity
       trackActivity('share_meals_bulk', {
         meal_name: selectedMeal.name,
         friends_count: selectedFriendsForMeal.length,
         timestamp: new Date().toISOString()
       });
-
+ 
       // Reset and go back
       setSelectedFriendsForMeal([]);
       setCurrentScreen('suggestions');
-
+ 
     } catch (err) {
       console.error("Error sharing meals:", err);
       alert("Failed to share meal. Please try again.");
@@ -2798,6 +2885,7 @@ const MealPlannerApp = () => {
             {/* Logic: If just logged in or on suggestions, show suggestions */}
             {(currentScreen === 'suggestions' || currentScreen === 'login') && (
               <SuggestionsScreen
+                user={user} // Added user prop
                 maxMealBudget={maxMealBudget}
                 setMaxMealBudget={setMaxMealBudget}
                 selectedCategory={selectedCategory}
