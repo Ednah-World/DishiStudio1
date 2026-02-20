@@ -1214,7 +1214,7 @@ const SuggestionsScreen = ({
                     }}
                     className="flex-1 bg-green-400 text-white py-2 rounded-lg font-bold hover:bg-green-500"
                   >
-                    Select
+                    Save
                   </button>
 
                 </div>
