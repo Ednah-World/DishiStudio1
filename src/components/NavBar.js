@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, Users, X } from 'lucide-react';
 
-const NavBar = ({ isLoggedIn, user, handleLogout, setCurrentScreen }) => {
+const NavBar = ({ isLoggedIn, user, handleLogout, setCurrentScreen, setShowDiscoveryModal }) => {
     const [showAppendices, setShowAppendices] = useState(false);
     const menuRef = useRef(null);
 
@@ -31,7 +31,10 @@ const NavBar = ({ isLoggedIn, user, handleLogout, setCurrentScreen }) => {
                 {isLoggedIn && (
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={() => { setCurrentScreen('community-suggestions'); setShowAppendices(false); }}
+                            onClick={() => {
+                                setShowDiscoveryModal(true);
+                                setShowAppendices(false);
+                            }}
                             className="bg-white text-orange-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-orange-50"
                         >
                             Suggestions
@@ -65,3 +68,5 @@ const NavBar = ({ isLoggedIn, user, handleLogout, setCurrentScreen }) => {
 };
 
 export default NavBar;
+
+//onClick={() => { setCurrentScreen('community-suggestions');

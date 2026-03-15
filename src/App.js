@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Home, DollarSign, MessageSquare, X, Calendar, Trash2, Users, Plus, Menu } from 'lucide-react';
+import { Home, DollarSign, MessageSquare, X, Calendar, Trash2, Users, Plus, Menu, Sparkles, Dices } from 'lucide-react';
 import { supabase, supabaseFetch, supabaseUrl, supabaseAnonKey } from './utils/supabaseClient';
 import { TERMS_OF_SERVICE, PRIVACY_POLICY } from './utils/constants';
 import HomeScreen from './screens/HomeScreen';
@@ -790,103 +790,6 @@ const CommunitySuggestionsScreen = ({
   );
 };
 
-// const ResetPasswordScreen = ({ supabaseUrl, supabaseAnonKey, onSuccess }) => {
-//   const [newPassword, setNewPassword] = useState('');
-//   const [confirm, setConfirm] = useState('');
-//   const [loading, setLoading] = useState(false);
-//   const [showPw, setShowPw] = useState(false);
-
-//   const handleReset = async () => {
-//     if (!newPassword || newPassword.length < 8) {
-//       alert("Password must be at least 8 characters");
-//       return;
-//     }
-//     if (newPassword !== confirm) {
-//       alert("Passwords do not match");
-//       return;
-//     }
-
-
-//     const hash = window.location.hash;
-//     const params = new URLSearchParams(hash.substring(1));
-//     const accessToken = params.get('access_token');
-
-//     if (!accessToken) {
-//       alert("Invalid or expired reset link. Please request a new one.");
-//       return;
-//     }
-
-//     setLoading(true);
-//     try {
-//       const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-//         method: 'PUT',
-//         headers: {
-//           'apikey': supabaseAnonKey,
-//           'Authorization': `Bearer ${accessToken}`,
-//           'Content-Type': 'application/json'
-//         },
-//         body: JSON.stringify({ password: newPassword })
-//       });
-
-//       if (!response.ok) {
-//         const err = await response.json();
-//         throw new Error(err.message || "Failed to update password");
-//       }
-
-//       alert("Password updated! Please log in with your new password.");
-//       window.location.hash = '';
-//       onSuccess();
-//     } catch (err) {
-//       alert("Error: " + err.message);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-pink-50 flex items-center justify-center p-4">
-//       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-orange-100">
-//         <h2 className="text-3xl font-bold text-gray-800 mb-2 text-center">Set New Password</h2>
-//         <p className="text-center text-gray-500 mb-6 text-sm">Choose a strong password for your account</p>
-
-//         <div className="mb-4">
-//           <label className="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
-//           <div className="relative">
-//             <input
-//               type={showPw ? "text" : "password"}
-//               placeholder="Min. 8 characters"
-//               value={newPassword}
-//               onChange={e => setNewPassword(e.target.value)}
-//               className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-//             />
-//             <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-//               {showPw ? '👁️' : '🙈'}
-//             </button>
-//           </div>
-//         </div>
-
-//         <div className="mb-6">
-//           <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
-//           <input
-//             type="password"
-//             placeholder="Repeat your password"
-//             value={confirm}
-//             onChange={e => setConfirm(e.target.value)}
-//             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-//           />
-//         </div>
-
-//         <button
-//           onClick={handleReset}
-//           disabled={loading}
-//           className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
-//         >
-//           {loading ? 'Updating...' : 'Update Password'}
-//         </button>
-//       </div>
-//     </div>
-//   );
-// };
 
 const ResetPasswordScreen = ({ onSuccess }) => {
   const [newPassword, setNewPassword] = useState('');
@@ -970,8 +873,182 @@ const ResetPasswordScreen = ({ onSuccess }) => {
   );
 };
 
+const RecommendationsScreen = ({ allMeals, mealHistory, maxMealBudget, setViewingRecipe, trackActivity, setCurrentScreen, onSelect, user }) => {
+  const [topCategory, setTopCategory] = useState(null);
+  const [recommendedMeals, setRecommendedMeals] = useState([]);
+
+  React.useEffect(() => {
+    // 1. Safety check: If they have no history yet, just show them affordable healthy meals
+    if (!mealHistory || mealHistory.length === 0) {
+      const healthyPicks = allMeals.filter(m => m.budget <= maxMealBudget && (m.health_score >= 4 || m.healthScore >= 4));
+      setRecommendedMeals(healthyPicks.slice(0, 4));
+      setTopCategory("Healthy Choices");
+      return;
+    }
+
+    // 2. Figure out their favorite category based on what they've logged
+    const categoryCounts = {};
+    mealHistory.forEach(historyItem => {
+      const mealDetails = allMeals.find(m => m.id === historyItem.id);
+      if (mealDetails && mealDetails.category) {
+        categoryCounts[mealDetails.category] = (categoryCounts[mealDetails.category] || 0) + historyItem.count;
+      }
+    });
+
+    let favorite = null;
+    let maxCount = 0;
+    for (const [cat, count] of Object.entries(categoryCounts)) {
+      if (count > maxCount) { maxCount = count; favorite = cat; }
+    }
+
+    // 3. Find meals in that category they HAVEN'T eaten yet
+    if (favorite) {
+      setTopCategory(favorite);
+      const historyIds = mealHistory.map(h => h.id);
+      const suggestions = allMeals.filter(m =>
+        m.category === favorite &&
+        m.budget <= maxMealBudget &&
+        !historyIds.includes(m.id)
+      );
+
+      // If they've eaten everything in that category, just show the category generally
+      if (suggestions.length === 0) {
+        const fallbackSuggestions = allMeals.filter(m => m.category === favorite && m.budget <= maxMealBudget);
+        setRecommendedMeals(fallbackSuggestions.slice(0, 4));
+      } else {
+        setRecommendedMeals(suggestions.slice(0, 4));
+      }
+    }
+  }, [mealHistory, allMeals, maxMealBudget]);
+
+  // THE ROULETTE LOGIC
+  const handleSurpriseMe = () => {
+    const affordableMeals = allMeals.filter(m => m.budget <= maxMealBudget);
+    if (affordableMeals.length === 0) {
+      alert("No meals found under your current budget! Try increasing your max meal budget.");
+      return;
+    }
+    const randomIndex = Math.floor(Math.random() * affordableMeals.length);
+    const randomMeal = affordableMeals[randomIndex];
+
+    setViewingRecipe(randomMeal);
+    trackActivity('surprise_me_clicked', { meal_shown: randomMeal.name });
+  };
+
+  return (
+    <div className="pb-24">
+      <div className="bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white p-6 shadow-md">
+        <h2 className="text-3xl font-bold mb-2">For You</h2>
+        <p className="opacity-90">Personalized picks & lucky rolls</p>
+      </div>
+
+      <div className="p-4 max-w-4xl mx-auto space-y-8">
+
+        {/* FEATURE 1: HABIT MATCHING */}
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-purple-50">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="text-purple-500 w-6 h-6" />
+            <h3 className="text-xl font-bold text-gray-800">
+              {topCategory === "Healthy Choices" ? "Healthy Choices For You" : `Because you love ${topCategory}...`}
+            </h3>
+          </div>
+
+          {recommendedMeals.length === 0 ? (
+            <p className="text-gray-500 text-sm">We need a bit more data! Keep saving meals to get personalized recommendations.</p>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-4">
+              {recommendedMeals.map(meal => (
+                <MealCard
+                  key={meal.id}
+                  meal={meal}
+                  user={user}
+                  setViewingRecipe={setViewingRecipe}
+                  trackActivity={trackActivity}
+                  setCurrentScreen={setCurrentScreen}
+                  onSelect={onSelect}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* FEATURE 3: THE ROULETTE */}
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg p-8 text-center text-white relative overflow-hidden">
+          <h3 className="text-3xl font-bold mb-3 relative z-10">Can't Decide?</h3>
+          <p className="mb-6 opacity-90 relative z-10">Let fate pick a meal under KSh {maxMealBudget} for you right now.</p>
+
+          <button
+            onClick={handleSurpriseMe}
+            className="bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg shadow-[0_0_15px_rgba(255,255,255,0.4)] hover:shadow-[0_0_25px_rgba(255,255,255,0.6)] hover:scale-105 transition-all relative z-10 flex items-center justify-center gap-2 mx-auto"
+          >
+            <Dices className="w-6 h-6" /> Roll the Dice
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+const DiscoveryModal = ({ isOpen, onClose, setCurrentScreen }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 relative animate-fade-in-up">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full p-1"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center mt-2">Discover Meals</h2>
+        <p className="text-center text-gray-500 text-sm mb-6">Where would you like to explore?</p>
+
+        <div className="space-y-4">
+          {/* OPTION 1: FOR YOU */}
+          <button
+            onClick={() => {
+              setCurrentScreen('recommendations');
+              onClose();
+            }}
+            className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-purple-100 hover:border-purple-400 hover:bg-purple-50 transition-all text-left group"
+          >
+            <div className="bg-purple-100 p-3 rounded-full text-purple-600 group-hover:scale-110 transition-transform">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-800 text-lg group-hover:text-purple-700 transition-colors">For You</h3>
+              <p className="text-xs text-gray-500 mt-1">Personalized picks & lucky rolls</p>
+            </div>
+          </button>
+
+          {/* OPTION 2: COMMUNITY */}
+          <button
+            onClick={() => {
+              setCurrentScreen('community-suggestions');
+              onClose();
+            }}
+            className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-blue-100 hover:border-blue-400 hover:bg-blue-50 transition-all text-left group"
+          >
+            <div className="bg-blue-100 p-3 rounded-full text-blue-600 group-hover:scale-110 transition-transform">
+              <Users className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-800 text-lg group-hover:text-blue-700 transition-colors">Community</h3>
+              <p className="text-xs text-gray-500 mt-1">Meals shared by the Dishi family</p>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const MealPlannerApp = () => {
   const [currentScreen, setCurrentScreen] = useState('home');
+  const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   //const searchRef = useRef(null); 
@@ -1302,6 +1379,7 @@ const MealPlannerApp = () => {
             user={user}
             handleLogout={handleLogout}
             setCurrentScreen={setCurrentScreen}
+            setShowDiscoveryModal={setShowDiscoveryModal}
           />
           <main className="flex-1 overflow-y-auto pb-20">
             {currentScreen === 'suggestions' && (
@@ -1336,11 +1414,27 @@ const MealPlannerApp = () => {
                 setCurrentScreen={setCurrentScreen}
               />
             )}
+
+            {currentScreen === 'recommendations' &&
+              <RecommendationsScreen
+                allMeals={allMeals}
+                mealHistory={mealHistory}
+                maxMealBudget={maxMealBudget}
+                setViewingRecipe={setViewingRecipe}
+                trackActivity={trackActivity}
+                setCurrentScreen={setCurrentScreen}
+                onSelect={trackMeal}
+                user={user} />}
           </main>
 
           <BottomNav setCurrentScreen={setCurrentScreen} trackActivity={trackActivity} />
           <RecipeModal />
           <TermsModal isOpen={showTermsModal} onAccept={handleAcceptTerms} />
+          <DiscoveryModal
+            isOpen={showDiscoveryModal}
+            onClose={() => setShowDiscoveryModal(false)}
+            setCurrentScreen={setCurrentScreen}
+          />
         </>
       )}
     </div>
